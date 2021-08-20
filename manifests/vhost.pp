@@ -838,6 +838,12 @@
 #   Allows per-virtual host setting [`php_admin_value`](http://php.net/manual/en/configuration.changes.php). 
 #   These flags or values cannot be overwritten by a user or an application.
 #
+# @param phpfpm_name
+#   Sets up an fcgi proxy handler redirecting requests to PHP files to a php-fpm instance socket
+#
+# @param phpfpm_port
+#   Sets up an fcgi proxy handler redirecting requests to PHP files to a php-fpm instance port
+
 # @param php_admin_flags
 #   Allows per-virtual host setting [`php_admin_flag`](http://php.net/manual/en/configuration.changes.php). 
 #   These flags or values cannot be overwritten by a user or an application.
@@ -1995,6 +2001,8 @@ define apache::vhost (
   Boolean $auth_oidc                                                                = false,
   Optional[Apache::OIDCSettings] $oidc_settings                                     = undef,
   Optional[Variant[Boolean,String]] $mdomain                                        = undef,
+  Optional[String] $phpfpm_name                                                     = undef,
+  Optional[Integer] $phpfpm_port                                                    = undef,
 ) {
   # The base class must be included first because it is used by parameter defaults
   if ! defined(Class['apache']) {
@@ -3013,6 +3021,19 @@ define apache::vhost (
       content => template('apache/vhost/_use_canonical_name.erb'),
     }
   }
+
+  # Template uses:
+  # - $phpfpm_name
+  # - $phpfpm_port
+
+  if $phpfpm_name or $phpfpm_port {
+    concat::fragment { "${name}-pfphpm":
+      target  => "${priority_real}${filename}.conf",
+      order   => 380,
+      content => template('apache/vhost/_phpfpm.erb'),
+    }
+  }
+
 
   # Template uses no variables
   concat::fragment { "${name}-file_footer":

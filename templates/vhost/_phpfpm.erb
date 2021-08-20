@@ -1,0 +1,9 @@
+  <Files "*.php">
+    <If "-f %{REQUEST_FILENAME}">
+<% if @phpfpm_port -%> 
+      RewriteRule "^/(.*\.php(/.*)?)$" fcgi://127.0.0.1:<%= @phpfpm_port %>/%{REQUEST_FILENAME}/$1 [P]
+<% else -%>
+      SetHandler "proxy:unix:/var/run/php-fpm-<%= @phpfpm_name %>.sock|fcgi://"
+<% end -%>
+    </If>
+  </Files>
