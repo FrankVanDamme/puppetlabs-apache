@@ -77,6 +77,8 @@ class apache::params inherits ::apache::version {
     $pidfile              = 'run/httpd.pid'
     $logroot              = "/var/log/${_scl_httpd_name}"
     $logroot_mode         = undef
+    $logroot_group        = undef
+    $logroot_owner        = undef
     $lib_path             = 'modules'
     $mpm_module           = 'prefork'
     $dev_packages         = "${_scl_httpd_name}-httpd-devel"
@@ -189,6 +191,8 @@ class apache::params inherits ::apache::version {
     $pidfile              = 'run/httpd.pid'
     $logroot              = '/var/log/httpd'
     $logroot_mode         = undef
+    $logroot_group        = undef
+    $logroot_owner        = undef
     $lib_path             = 'modules'
     $mpm_module           = 'prefork'
     $dev_packages         = 'httpd-devel'
@@ -353,6 +357,8 @@ class apache::params inherits ::apache::version {
     $pidfile             = "\${APACHE_PID_FILE}"
     $logroot             = '/var/log/apache2'
     $logroot_mode        = undef
+    $logroot_group       = undef
+    $logroot_owner       = undef
     $lib_path            = '/usr/lib/apache2/modules'
     $mpm_module          = 'worker'
     $default_ssl_cert    = '/etc/ssl/certs/ssl-cert-snakeoil.pem'
@@ -557,6 +563,8 @@ class apache::params inherits ::apache::version {
     $pidfile          = '/var/run/httpd.pid'
     $logroot          = '/var/log/apache24'
     $logroot_mode     = undef
+    $logroot_group    = undef
+    $logroot_owner    = undef
     $lib_path         = '/usr/local/libexec/apache24'
     $mpm_module       = 'prefork'
     $dev_packages     = undef
@@ -630,6 +638,8 @@ class apache::params inherits ::apache::version {
     $ports_file       = "${conf_dir}/ports.conf"
     $logroot          = '/var/log/apache2'
     $logroot_mode     = undef
+    $logroot_group    = undef
+    $logroot_owner    = undef
     $lib_path         = '/usr/lib/apache2/modules'
     $mpm_module       = 'prefork'
     $dev_packages     = undef
@@ -702,6 +712,8 @@ class apache::params inherits ::apache::version {
     $pidfile             = '/var/run/httpd2.pid'
     $logroot             = '/var/log/apache2'
     $logroot_mode        = undef
+    $logroot_group       = undef
+    $logroot_owner       = undef
     $lib_path            = '/usr/lib64/apache2' #changes for some modules based on mpm
     $mpm_module          = 'prefork'
     if versioncmp($::operatingsystemrelease, '15') < 0 {

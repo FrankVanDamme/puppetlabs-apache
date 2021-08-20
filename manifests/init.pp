@@ -225,6 +225,12 @@
 #   without being aware of the consequences. See the [Apache documentation](https://httpd.apache.org/docs/current/logs.html#security)
 #   for details.
 #
+# @param logroot_owner
+#   Sets individual user access to the logroot directory.
+#
+# @param logroot_group
+#   Sets group access to the `logroot` directory.
+#
 # @param manage_group
 #   When `false`, stops Puppet from creating the group resource.<br />
 #   If you have a group created from another Puppet module that you want to use to run Apache, 
@@ -524,6 +530,8 @@ class apache (
   $limitreqfields                                                       = '100',
   $logroot                                                              = $apache::params::logroot,
   $logroot_mode                                                         = $apache::params::logroot_mode,
+  $logroot_owner                                                        = $apache::params::logroot_owner,
+  $logroot_group                                                        = $apache::params::logroot_group,
   Apache::LogLevel $log_level                                           = $apache::params::log_level,
   $log_formats                                                          = {},
   $ssl_file                                                             = undef,
@@ -839,6 +847,8 @@ class apache (
       priority                     => '15',
       ip                           => $ip,
       logroot_mode                 => $logroot_mode,
+      logroot_group                => $logroot_group,
+      logroot_owner                => $logroot_owner,
       manage_docroot               => $default_vhost,
       use_servername_for_filenames => true,
       use_port_for_filenames       => true,
@@ -858,6 +868,8 @@ class apache (
       priority                     => '15',
       ip                           => $ip,
       logroot_mode                 => $logroot_mode,
+      logroot_group                => $logroot_group,
+      logroot_owner                => $logroot_owner,
       manage_docroot               => $default_ssl_vhost,
       use_servername_for_filenames => true,
       use_port_for_filenames       => true,
