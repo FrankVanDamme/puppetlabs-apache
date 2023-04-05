@@ -222,7 +222,7 @@ describe 'apache parameters' do
   describe 'timeout' do
     describe 'setup' do
       it 'applies cleanly' do
-        pp = "class { 'apache': timeout => '1234' }"
+        pp = "class { 'apache': timeout => 1234 }"
         apply_manifest(pp, catch_failures: true)
       end
     end
@@ -384,7 +384,7 @@ describe 'apache parameters' do
   describe 'keepalive' do
     describe 'setup' do
       it 'applies cleanly' do
-        pp = "class { 'apache': keepalive => 'Off', keepalive_timeout => '30', max_keepalive_requests => '200' }"
+        pp = "class { 'apache': keepalive => 'Off', keepalive_timeout => 30, max_keepalive_requests => 200 }"
         apply_manifest(pp, catch_failures: true)
       end
     end
@@ -400,7 +400,7 @@ describe 'apache parameters' do
   describe 'limitrequestfieldsize' do
     describe 'setup' do
       it 'applies cleanly' do
-        pp = "class { 'apache': limitreqfieldsize => '16830' }"
+        pp = "class { 'apache': limitreqfieldsize => 16830 }"
         apply_manifest(pp, catch_failures: true)
       end
     end
@@ -414,7 +414,7 @@ describe 'apache parameters' do
   describe 'limitrequestfields' do
     describe 'setup' do
       it 'applies cleanly' do
-        pp = "class { 'apache': limitreqfields => '120' }"
+        pp = "class { 'apache': limitreqfields => 120 }"
         apply_manifest(pp, catch_failures: true)
       end
     end
@@ -430,11 +430,10 @@ describe 'apache parameters' do
       pp = <<-MANIFEST
           if $::osfamily == 'RedHat' and "$::selinux" == "true" {
             $semanage_package = $::operatingsystemmajrelease ? {
-              '5'     => 'policycoreutils',
-              '8'     => 'policycoreutils-python-utils',
-              default => 'policycoreutils-python',
+              '6'     => 'policycoreutils-python',
+              '7'     => 'policycoreutils-python',
+              default => 'policycoreutils-python-utils',
             }
-
             package { $semanage_package: ensure => installed }
             exec { 'set_apache_defaults':
               command => 'semanage fcontext -a -t httpd_log_t "/apache_spec(/.*)?"',

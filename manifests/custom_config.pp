@@ -49,18 +49,18 @@
 #   show_diff property for configuration file resource
 #
 define apache::custom_config (
-  Enum['absent', 'present'] $ensure = 'present',
-  $confdir                          = $apache::confd_dir,
-  $content                          = undef,
-  $priority                         = '25',
-  $source                           = undef,
-  $verify_command                   = $apache::params::verify_command,
-  Boolean $verify_config            = true,
-  $filename                         = undef,
-  $owner                            = undef,
-  $group                            = undef,
-  $file_mode                        = undef,
-  Boolean $show_diff                = true,
+  Enum['absent', 'present'] $ensure     = 'present',
+  Stdlib::Absolutepath $confdir         = $apache::confd_dir,
+  Optional[String] $content             = undef,
+  Variant[Integer, Boolean] $priority   = 25,
+  Optional[String] $source              = undef,
+  String $verify_command                = $apache::params::verify_command,
+  Boolean $verify_config                = true,
+  Optional[String] $filename            = undef,
+  Optional[String] $owner               = undef,
+  Optional[String] $group               = undef,
+  Optional[Stdlib::Filemode] $file_mode = undef,
+  Boolean $show_diff                    = true,
 ) {
   if $content and $source {
     fail('Only one of $content and $source can be specified.')

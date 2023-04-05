@@ -47,18 +47,18 @@
 # @see https://httpd.apache.org/docs/current/mod/event.html for additional documentation.
 # @note Unsupported platforms: SLES: all
 class apache::mod::event (
-  $startservers           = '2',
-  $maxclients             = '150',
-  $maxrequestworkers      = undef,
-  $minsparethreads        = '25',
-  $maxsparethreads        = '75',
-  $threadsperchild        = '25',
-  $maxrequestsperchild    = '0',
-  $maxconnectionsperchild = undef,
-  $serverlimit            = '25',
-  $apache_version         = undef,
-  $threadlimit            = '64',
-  $listenbacklog          = '511',
+  Variant[Integer, Boolean] $startservers                     = 2,
+  Variant[Integer, Boolean] $maxclients                       = 150,
+  Optional[Variant[Integer, Boolean]] $maxrequestworkers      = undef,
+  Variant[Integer, Boolean] $minsparethreads                  = 25,
+  Variant[Integer, Boolean] $maxsparethreads                  = 75,
+  Variant[Integer, Boolean] $threadsperchild                  = 25,
+  Variant[Integer, Boolean] $maxrequestsperchild              = 0,
+  Optional[Variant[Integer, Boolean]] $maxconnectionsperchild = undef,
+  Variant[Integer, Boolean] $serverlimit                      = 25,
+  Optional[String] $apache_version                            = undef,
+  Variant[Integer, Boolean]  $threadlimit                     = 64,
+  Variant[Integer, Boolean]  $listenbacklog                   = 511,
 ) {
   include apache
 
@@ -99,7 +99,7 @@ class apache::mod::event (
     notify  => Class['apache::service'],
   }
 
-  case $::osfamily {
+  case $facts['os']['family'] {
     'redhat': {
       if versioncmp($_apache_version, '2.4') >= 0 {
         apache::mpm { 'event':
@@ -107,7 +107,7 @@ class apache::mod::event (
         }
       }
     }
-    'debian','freebsd' : {
+    'debian', 'freebsd' : {
       apache::mpm { 'event':
         apache_version => $_apache_version,
       }
@@ -118,7 +118,7 @@ class apache::mod::event (
       }
     }
     default: {
-      fail("Unsupported osfamily ${::osfamily}")
+      fail("Unsupported osfamily ${$facts['os']['family']}")
     }
   }
 }

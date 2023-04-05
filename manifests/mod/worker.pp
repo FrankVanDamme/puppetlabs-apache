@@ -43,16 +43,16 @@
 # @see https://httpd.apache.org/docs/current/mod/worker.html for additional documentation.
 #
 class apache::mod::worker (
-  $startservers        = '2',
-  $maxclients          = '150',
-  $minsparethreads     = '25',
-  $maxsparethreads     = '75',
-  $threadsperchild     = '25',
-  $maxrequestsperchild = '0',
-  $serverlimit         = '25',
-  $threadlimit         = '64',
-  $listenbacklog       = '511',
-  $apache_version      = undef,
+  Integer $startservers            = 2,
+  Integer $maxclients              = 150,
+  Integer $minsparethreads         = 25,
+  Integer $maxsparethreads         = 75,
+  Integer $threadsperchild         = 25,
+  Integer $maxrequestsperchild     = 0,
+  Integer $serverlimit             = 25,
+  Integer $threadlimit             = 64,
+  Integer $listenbacklog           = 511,
+  Optional[String] $apache_version = undef,
 ) {
   include apache
   $_apache_version = pick($apache_version, $apache::apache_version)
@@ -93,7 +93,7 @@ class apache::mod::worker (
     notify  => Class['apache::service'],
   }
 
-  case $::osfamily {
+  case $facts['os']['family'] {
     'redhat': {
       if versioncmp($_apache_version, '2.4') >= 0 {
         ::apache::mpm { 'worker':
@@ -130,7 +130,7 @@ class apache::mod::worker (
       }
     }
     default: {
-      fail("Unsupported osfamily ${::osfamily}")
+      fail("Unsupported osfamily ${$facts['os']['family']}")
     }
   }
 }

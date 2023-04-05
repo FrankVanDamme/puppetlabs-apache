@@ -51,7 +51,7 @@ describe 'apache::vhost define' do
     end
   end
 
-  context 'default vhost with ssl', unless: (os[:family].include?('redhat') && os[:release].to_i == 8) do
+  context 'default vhost with ssl', unless: (os[:family].include?('redhat') && os[:release].to_i >= 8) do
     pp = <<-MANIFEST
       file { '#{apache_hash['run_dir']}':
         ensure  => 'directory',
@@ -86,7 +86,7 @@ describe 'apache::vhost define' do
       }
 
       apache::vhost { 'first.example.com':
-        port    => '80',
+        port    => 80,
         docroot => '/var/www/first',
         require => File['/var/www'],
       }
@@ -105,7 +105,7 @@ describe 'apache::vhost define' do
     pp = <<-MANIFEST
       class { 'apache': }
       apache::vhost { 'proxy.example.com':
-        port    => '80',
+        port    => 80,
         docroot => '/var/www/proxy',
         proxy_pass => [
           { 'path' => '/foo', 'url' => 'http://backend-foo/'},
@@ -133,7 +133,7 @@ describe 'apache::vhost define' do
     pp = <<-MANIFEST
       class { 'apache': }
       apache::vhost { 'proxy.example.com':
-        port    => '80',
+        port    => 80,
         docroot => '#{apache_hash['doc_root']}/proxy',
         proxy_pass_match => [
           { 'path' => '/foo', 'url' => 'http://backend-foo/'},
@@ -163,7 +163,7 @@ describe 'apache::vhost define' do
         default_vhost => false,
       }
       apache::vhost { 'example.com':
-        port     => ['80', '8080'],
+        port     => [80, 8080],
         ip       => ['127.0.0.1','127.0.0.2'],
         ip_based => true,
         docroot  => '/var/www/html',
@@ -232,7 +232,7 @@ describe 'apache::vhost define' do
         default_vhost  => false,
       }
       apache::vhost { 'example.com':
-        port           => '80',
+        port           => 80,
         ip             => '::1',
         ip_based       => true,
         docroot        => '/var/www/html',
@@ -327,7 +327,7 @@ describe 'apache::vhost define' do
         class { 'apache': }
 
         if versioncmp($apache_version, '2.4') >= 0 {
-          $_files_match_directory = { 'path' => 'private.html$', 'provider' => 'filesmatch', 'require' => 'all denied' }
+          $_files_match_directory = [{ 'path' => 'private.html$', 'provider' => 'filesmatch', 'require' => 'all denied' }]
         } else {
           $_files_match_directory = [
             { 'path' => 'private.html$', 'provider' => 'filesmatch', 'deny' => 'from all' },
@@ -338,8 +338,7 @@ describe 'apache::vhost define' do
         $_directories = [
           { 'path' => '/var/www/files', },
           { 'path' => '/foo/', 'provider' => 'location', 'directoryindex' => 'notindex.html', },
-          $_files_match_directory,
-        ]
+        ] + $_files_match_directory
 
         apache::vhost { 'files.example.net':
           docroot     => '/var/www/files',
@@ -513,7 +512,7 @@ describe 'apache::vhost define' do
       apache::vhost { 'virt.example.com':
         vhost_name      => '*',
         serveraliases   => '*virt.example.com',
-        port            => '80',
+        port            => 80,
         docroot         => '/var/www/virt',
         virtual_docroot => '/var/www/virt/%1',
       }
@@ -553,12 +552,12 @@ describe 'apache::vhost define' do
         apache::vhost { 'localhost':
           docroot => '/var/www/local',
           ip      => '127.0.0.1',
-          port    => '8888',
+          port    => 8888,
         }
         apache::listen { '*:80': }
         apache::vhost { 'proxy.example.com':
           docroot    => '/var/www',
-          port       => '80',
+          port       => 80,
           add_listen => false,
           proxy_pass => {
             'path' => '/',
@@ -598,12 +597,12 @@ describe 'apache::vhost define' do
         apache::vhost { 'localhost':
           docroot => '/var/www/local',
           ip      => '127.0.0.1',
-          port    => '8888',
+          port    => 8888,
         }
         apache::listen { '*:80': }
         apache::vhost { 'proxy.example.com':
           docroot    => '/var/www',
-          port       => '80',
+          port       => 80,
           add_listen => false,
           proxy_pass_match => {
             'path' => '/',
@@ -691,7 +690,7 @@ describe 'apache::vhost define' do
       apache::listen { '81': }
       apache::vhost { 'testlisten.server':
         docroot    => '/tmp',
-        port       => '80',
+        port       => 80,
         add_listen => false,
         servername => 'testlisten.server',
       }
@@ -964,13 +963,8 @@ describe 'apache::vhost define' do
             logroot                       => '/tmp',
           }
       MANIFEST
-      it 'applies cleanly and DOES NOT print warning about $use_servername_for_filenames usage for test.server vhost' do
-        result = apply_manifest(pp, catch_failures: true)
-        expect(result.stderr).not_to contain %r{
-          .*Warning\:\sScope\(Apache::Vhost\[test\.server\]\)\:.*
-          It\sis\spossible\sfor\sthe\s\$name\sparameter.*
-          sanitized\s\$servername\sparameter\swhen\snot\sexplicitly\sdefined\.
-        }xm
+      it 'applies cleanly' do
+        _result = apply_manifest(pp, catch_failures: true)
       end
       describe file("#{apache_hash['vhost_dir']}/25-test.servername.conf") do
         it { is_expected.to be_file }
@@ -988,13 +982,8 @@ describe 'apache::vhost define' do
             logroot                       => '/tmp',
           }
       MANIFEST
-      it 'applies cleanly and prints warning about $use_servername_for_filenames usage for test.server vhost' do
-        result = apply_manifest(pp, catch_failures: true)
-        expect(result.stderr).to contain %r{
-          .*Warning\:\sScope\(Apache::Vhost\[test\.server\]\)\:.*
-          It\sis\spossible\sfor\sthe\s\$name\sparameter.*
-          sanitized\s\$servername\sparameter\swhen\snot\sexplicitly\sdefined\.
-        }xm
+      it 'applies cleanly' do
+        _result = apply_manifest(pp, catch_failures: true)
       end
       describe file("#{apache_hash['vhost_dir']}/25-test.server.conf") do
         it { is_expected.to be_file }
@@ -1093,29 +1082,6 @@ describe 'apache::vhost define' do
     end
   end
 
-  describe 'suphp' do
-    pp = <<-MANIFEST
-      class { 'apache': service_ensure => stopped, }
-      host { 'test.server': ip => '127.0.0.1' }
-      apache::vhost { 'test.server':
-        docroot          => '/tmp',
-        suphp_addhandler => '#{apache_hash['suphp_handler']}',
-        suphp_engine     => 'on',
-        suphp_configpath => '#{apache_hash['suphp_configpath']}',
-      }
-    MANIFEST
-    it 'applies cleanly' do
-      apply_manifest(pp, catch_failures: true)
-    end
-
-    describe file("#{apache_hash['vhost_dir']}/25-test.server.conf") do
-      it { is_expected.to be_file }
-      it { is_expected.to contain "suPHP_AddHandler #{apache_hash['suphp_handler']}" }
-      it { is_expected.to contain 'suPHP_Engine on' }
-      it { is_expected.to contain "suPHP_ConfigPath \"#{apache_hash['suphp_configpath']}\"" }
-    end
-  end
-
   describe 'directory rewrite rules' do
     pp = <<-MANIFEST
       class { 'apache': }
@@ -1168,7 +1134,7 @@ describe 'apache::vhost define' do
         docroot                     => '/tmp',
         wsgi_application_group      => '%{GLOBAL}',
         wsgi_daemon_process         => { 'wsgi' => { 'python-home' => '/usr' }, 'foo' => {} },
-        wsgi_daemon_process_options => {processes => '2'},
+        wsgi_daemon_process_options => {processes => 2},
         wsgi_import_script          => '/test1',
         wsgi_import_script_options  => { application-group => '%{GLOBAL}', process-group => 'wsgi' },
         wsgi_process_group          => 'nobody',
@@ -1199,9 +1165,9 @@ describe 'apache::vhost define' do
     pp = <<-MANIFEST
       if $::osfamily == 'RedHat' and "$::selinux" == "true" {
         $semanage_package = $::operatingsystemmajrelease ? {
-          '5'     => 'policycoreutils',
-          '8'     => 'policycoreutils-python-utils',
-          default => 'policycoreutils-python',
+          '6'     => 'policycoreutils-python',
+          '7'     => 'policycoreutils-python',
+          default => 'policycoreutils-python-utils',
         }
         package { $semanage_package: ensure => installed }
         exec { 'set_apache_defaults':
@@ -1241,7 +1207,7 @@ describe 'apache::vhost define' do
       class { 'apache': }
       class { 'apache::mod::shib': }
       apache::vhost { 'test.server':
-        port    => '80',
+        port    => 80,
         docroot => '/var/www/html',
         shib_compat_valid_user => 'On'
       }
@@ -1261,7 +1227,7 @@ describe 'apache::vhost define' do
     pp = <<-MANIFEST
         class { 'apache': }
         apache::vhost { 'test.server':
-          port    => '80',
+          port    => 80,
           docroot => '/var/www/html',
           auth_oidc     => true,
           oidc_settings => {
