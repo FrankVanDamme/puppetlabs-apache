@@ -1167,7 +1167,7 @@ Default value: `$apache::params::mime_types_additional`
 
 The libraries installed depends on the `dev_packages` parameter of the `apache::params`
 class, based on your operating system:
-- **Debian** : `libaprutil1-dev`, `libapr1-dev`; `apache2-dev` on Ubuntu 13.10 and Debian 8; `apache2-prefork-dev` on other versions.
+- **Debian** : `libaprutil1-dev`, `libapr1-dev`; `apache2-dev`
 - **FreeBSD**: `undef`; on FreeBSD, you must declare the `apache::package` or `apache` classes before declaring `apache::dev`.
 - **Gentoo**: `undef`.
 - **Red Hat**: `httpd-devel`.
@@ -7756,6 +7756,7 @@ The following parameters are available in the `apache::vhost` defined type:
 * [`suphp_engine`](#suphp_engine)
 * [`vhost_name`](#vhost_name)
 * [`virtual_docroot`](#virtual_docroot)
+* [`virtual_use_default_docroot`](#virtual_use_default_docroot)
 * [`wsgi_daemon_process`](#wsgi_daemon_process)
 * [`wsgi_daemon_process_options`](#wsgi_daemon_process_options)
 * [`wsgi_application_group`](#wsgi_application_group)
@@ -9957,6 +9958,8 @@ Data type: `Any`
 
 Sets up a virtual host with a wildcard alias subdomain mapped to a directory with the
 same name. For example, `http://example.com` would map to `/var/www/example.com`.
+Note that the `DocumentRoot` directive will not be present even though there is a value
+set for `docroot` in the manifest. See [`virtual_use_default_docroot`](#virtual_use_default_docroot) to change this behavior.
 ``` puppet
 apache::vhost { 'subdomain.loc':
   vhost_name      => '*',
@@ -9964,6 +9967,25 @@ apache::vhost { 'subdomain.loc':
   virtual_docroot => '/var/www/%-2+',
   docroot         => '/var/www',
   serveraliases   => ['*.loc',],
+}
+```
+
+Default value: ``false``
+
+##### <a name="virtual_use_default_docroot"></a>`virtual_use_default_docroot`
+
+Data type: `Any`
+
+By default, when using `virtual_docroot`, the value of `docroot` is ignored. Setting this
+to `true` will mean both directives will be added to the configuration.
+``` puppet
+apache::vhost { 'subdomain.loc':
+  vhost_name                  => '*',
+  port                        => '80',
+  virtual_docroot             => '/var/www/%-2+',
+  docroot                     => '/var/www',
+  virtual_use_default_docroot => true,
+  serveraliases               => ['*.loc',],
 }
 ```
 
