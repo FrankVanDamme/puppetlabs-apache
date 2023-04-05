@@ -5,6 +5,9 @@ TraceEnable <%= scope.call_function('apache::bool2httpd', [@trace_enable]) %>
 
 ServerName "<%= @servername %>"
 ServerRoot "<%= @server_root %>"
+<%- if @serveradmin -%>
+ServerAdmin <%= @serveradmin %>
+<%- end -%>
 PidFile <%= @pidfile %>
 Timeout <%= @timeout %>
 KeepAlive <%= @keepalive %>
@@ -12,6 +15,9 @@ MaxKeepAliveRequests <%= @max_keepalive_requests %>
 KeepAliveTimeout <%= @keepalive_timeout %>
 LimitRequestFieldSize <%= @limitreqfieldsize %>
 LimitRequestFields <%= @limitreqfields %>
+<% if @limitreqline -%>
+LimitRequestLine <%= @limitreqline %>
+<% end -%>
 <%# Actually >= 2.4.24, but the minor version is not provided -%>
 <%- if @http_protocol_options and scope.function_versioncmp([@apache_version, '2.4']) >= 0 -%>
 HttpProtocolOptions <%= @http_protocol_options %>

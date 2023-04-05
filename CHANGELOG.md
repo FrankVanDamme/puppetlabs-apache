@@ -2,7 +2,105 @@
 
 All notable changes to this project will be documented in this file. The format is based on [Keep a Changelog](http://keepachangelog.com/en/1.0.0/) and this project adheres to [Semantic Versioning](http://semver.org).
 
-## [v8.0.0](https://github.com/puppetlabs/puppetlabs-apache/tree/v8.0.0) (2022-08-08)
+## [v8.6.0](https://github.com/puppetlabs/puppetlabs-apache/tree/v8.6.0) (2022-12-14)
+
+[Full Changelog](https://github.com/puppetlabs/puppetlabs-apache/compare/v8.5.0...v8.6.0)
+
+### Added
+
+- Parameterize SecRequestBodyLimitAction and SecResponseBodyLimitAction [\#2353](https://github.com/puppetlabs/puppetlabs-apache/pull/2353) ([Vincevrp](https://github.com/Vincevrp))
+
+### Fixed
+
+- fix mod\_proxy\_html on FreeBSD [\#2355](https://github.com/puppetlabs/puppetlabs-apache/pull/2355) ([fraenki](https://github.com/fraenki))
+
+## [v8.5.0](https://github.com/puppetlabs/puppetlabs-apache/tree/v8.5.0) (2022-12-06)
+
+[Full Changelog](https://github.com/puppetlabs/puppetlabs-apache/compare/v8.4.0...v8.5.0)
+
+### Added
+
+- add LimitRequestLine parameter [\#2345](https://github.com/puppetlabs/puppetlabs-apache/pull/2345) ([stefan-ahrefs](https://github.com/stefan-ahrefs))
+
+### Fixed
+
+- disable::mpm\_event: Fix module deactivation [\#2349](https://github.com/puppetlabs/puppetlabs-apache/pull/2349) ([bastelfreak](https://github.com/bastelfreak))
+- remove \_module from apache::mod::unique\_id name. [\#2339](https://github.com/puppetlabs/puppetlabs-apache/pull/2339) ([mdklapwijk](https://github.com/mdklapwijk))
+
+## [v8.4.0](https://github.com/puppetlabs/puppetlabs-apache/tree/v8.4.0) (2022-11-15)
+
+[Full Changelog](https://github.com/puppetlabs/puppetlabs-apache/compare/v8.3.0...v8.4.0)
+
+### Added
+
+- add maxrequestworkers parameter for mpm\_worker module [\#2331](https://github.com/puppetlabs/puppetlabs-apache/pull/2331) ([trefzer](https://github.com/trefzer))
+- support lbmethod modules [\#2268](https://github.com/puppetlabs/puppetlabs-apache/pull/2268) ([xorpaul](https://github.com/xorpaul))
+
+### Fixed
+
+- Declare minimum Puppet version to be 6.24.0 [\#2342](https://github.com/puppetlabs/puppetlabs-apache/pull/2342) ([ekohl](https://github.com/ekohl))
+- Fix RedHat + PHP 8 libphp file [\#2333](https://github.com/puppetlabs/puppetlabs-apache/pull/2333) ([polatsinan](https://github.com/polatsinan))
+
+## [v8.3.0](https://github.com/puppetlabs/puppetlabs-apache/tree/v8.3.0) (2022-10-28)
+
+[Full Changelog](https://github.com/puppetlabs/puppetlabs-apache/compare/v8.2.1...v8.3.0)
+
+### Added
+
+- Automatically enable mod\_http2 if needed [\#2337](https://github.com/puppetlabs/puppetlabs-apache/pull/2337) ([ekohl](https://github.com/ekohl))
+- Update EL8+ and Debian SSL defaults [\#2336](https://github.com/puppetlabs/puppetlabs-apache/pull/2336) ([ekohl](https://github.com/ekohl))
+- Support setting SSLProxyCipherSuite on mod\_ssl [\#2335](https://github.com/puppetlabs/puppetlabs-apache/pull/2335) ([ekohl](https://github.com/ekohl))
+
+### Fixed
+
+- Make serveradmin an optional parameter and use it [\#2338](https://github.com/puppetlabs/puppetlabs-apache/pull/2338) ([ekohl](https://github.com/ekohl))
+- pdksync - \(CONT-189\) Remove support for RedHat6 / OracleLinux6 / Scientific6 [\#2326](https://github.com/puppetlabs/puppetlabs-apache/pull/2326) ([david22swan](https://github.com/david22swan))
+- pdksync - \(CONT-130\) Dropping Support for Debian 9 [\#2322](https://github.com/puppetlabs/puppetlabs-apache/pull/2322) ([jordanbreen28](https://github.com/jordanbreen28))
+- fix directory empty options if an empty array is being used [\#2312](https://github.com/puppetlabs/puppetlabs-apache/pull/2312) ([bovy89](https://github.com/bovy89))
+
+## [v8.2.1](https://github.com/puppetlabs/puppetlabs-apache/tree/v8.2.1) (2022-09-27)
+
+[Full Changelog](https://github.com/puppetlabs/puppetlabs-apache/compare/v8.2.0...v8.2.1)
+
+### Fixed
+
+- \(maint\) Codebase Hardening [\#2313](https://github.com/puppetlabs/puppetlabs-apache/pull/2313) ([david22swan](https://github.com/david22swan))
+
+## [v8.2.0](https://github.com/puppetlabs/puppetlabs-apache/tree/v8.2.0) (2022-09-13)
+
+[Full Changelog](https://github.com/puppetlabs/puppetlabs-apache/compare/v8.1.0...v8.2.0)
+
+### Added
+
+- Allow RewriteInherit with empty rewrites [\#2301](https://github.com/puppetlabs/puppetlabs-apache/pull/2301) ([martin-koerner](https://github.com/martin-koerner))
+- Add support for all proxy schemes, not just https:// [\#2289](https://github.com/puppetlabs/puppetlabs-apache/pull/2289) ([canth1](https://github.com/canth1))
+- Parameterize CRS DOS protection [\#2280](https://github.com/puppetlabs/puppetlabs-apache/pull/2280) ([Vincevrp](https://github.com/Vincevrp))
+- Allow multiple scopes for Scope in Apache::OIDCSettings [\#2265](https://github.com/puppetlabs/puppetlabs-apache/pull/2265) ([jjackzhn](https://github.com/jjackzhn))
+
+### Fixed
+
+- \(maint\) Add variable manage\_vhost\_enable\_dir [\#2309](https://github.com/puppetlabs/puppetlabs-apache/pull/2309) ([david22swan](https://github.com/david22swan))
+- Simplify the logic in \_require.erb [\#2303](https://github.com/puppetlabs/puppetlabs-apache/pull/2303) ([ekohl](https://github.com/ekohl))
+- Fix deprecation warning about performing a regex comparison on a hash [\#2293](https://github.com/puppetlabs/puppetlabs-apache/pull/2293) ([smokris](https://github.com/smokris))
+
+## [v8.1.0](https://github.com/puppetlabs/puppetlabs-apache/tree/v8.1.0) (2022-08-18)
+
+[Full Changelog](https://github.com/puppetlabs/puppetlabs-apache/compare/v8.0.0...v8.1.0)
+
+### Added
+
+- Manage DNF module for mod\_auth\_openidc [\#2283](https://github.com/puppetlabs/puppetlabs-apache/pull/2283) ([ekohl](https://github.com/ekohl))
+- pdksync - \(GH-cat-11\) Certify Support for Ubuntu 22.04 [\#2276](https://github.com/puppetlabs/puppetlabs-apache/pull/2276) ([david22swan](https://github.com/david22swan))
+
+### Fixed
+
+- Allow integers for timeouts [\#2294](https://github.com/puppetlabs/puppetlabs-apache/pull/2294) ([traylenator](https://github.com/traylenator))
+- Allow setting icons\_path to false so no alias will be set for it [\#2292](https://github.com/puppetlabs/puppetlabs-apache/pull/2292) ([Zarne](https://github.com/Zarne))
+- fix duplicate definition of auth\_basic-mod [\#2287](https://github.com/puppetlabs/puppetlabs-apache/pull/2287) ([sircubbi](https://github.com/sircubbi))
+- Allow custom\_config to have a string priority again [\#2284](https://github.com/puppetlabs/puppetlabs-apache/pull/2284) ([martin-koerner](https://github.com/martin-koerner))
+- Remove auth\_kerb and nss from Debian Bullseye [\#2281](https://github.com/puppetlabs/puppetlabs-apache/pull/2281) ([ekohl](https://github.com/ekohl))
+
+## [v8.0.0](https://github.com/puppetlabs/puppetlabs-apache/tree/v8.0.0) (2022-08-09)
 
 [Full Changelog](https://github.com/puppetlabs/puppetlabs-apache/compare/v7.0.0...v8.0.0)
 

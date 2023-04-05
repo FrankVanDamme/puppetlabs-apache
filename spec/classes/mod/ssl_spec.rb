@@ -11,35 +11,39 @@ describe 'apache::mod::ssl', type: :class do
   end
 
   context 'on a RedHat' do
-    context '6 OS' do
-      include_examples 'RedHat 6'
-
-      it { is_expected.to contain_class('apache::params') }
-      it { is_expected.to contain_apache__mod('ssl') }
-      it { is_expected.to contain_package('mod_ssl') }
-      it { is_expected.to contain_file('ssl.conf').with_path('/etc/httpd/conf.d/ssl.conf') }
-      it { is_expected.to contain_file('ssl.conf').with_content(%r{SSLProtocol all -SSLv2 -SSLv3}) }
-    end
     context '8 OS' do
       include_examples 'RedHat 8'
 
       it { is_expected.to contain_class('apache::params') }
       it { is_expected.to contain_apache__mod('ssl') }
       it { is_expected.to contain_package('mod_ssl') }
-      it { is_expected.to contain_file('ssl.conf').with_path('/etc/httpd/conf.modules.d/ssl.conf') }
-      it { is_expected.to contain_file('ssl.conf').with_content(%r{SSLProtocol all}) }
-    end
-    context '6 OS with a custom package_name parameter' do
-      include_examples 'RedHat 6'
-      let :params do
-        { package_name: 'httpd24-mod_ssl' }
+      it {
+        is_expected.to contain_file('ssl.conf')
+          .with_path('/etc/httpd/conf.modules.d/ssl.conf')
+          .without_content(%r{SSLProtocol})
+          .with_content(%r{^  SSLCipherSuite PROFILE=SYSTEM$})
+          .with_content(%r{^  SSLProxyCipherSuite PROFILE=SYSTEM$})
+      }
+
+      context 'with ssl_proxy_cipher_suite' do
+        let(:params) do
+          {
+            ssl_proxy_cipher_suite: 'HIGH',
+          }
+        end
+
+        it { is_expected.to contain_file('ssl.conf').with_content(%r{SSLProxyCipherSuite HIGH}) }
       end
 
-      it { is_expected.to contain_class('apache::params') }
-      it { is_expected.to contain_apache__mod('ssl') }
-      it { is_expected.to contain_package('httpd24-mod_ssl') }
-      it { is_expected.not_to contain_package('mod_ssl') }
-      it { is_expected.to contain_file('ssl.conf').with_content(%r{^  SSLSessionCache "shmcb:/var/cache/mod_ssl/scache\(512000\)"$}) }
+      context 'with empty ssl_protocol' do
+        let(:params) do
+          {
+            ssl_protocol: [],
+          }
+        end
+
+        it { is_expected.to contain_file('ssl.conf').without_content(%r{SSLProtocol}) }
+      end
     end
 
     context '7 OS with custom directories for PR#1635' do
@@ -65,7 +69,7 @@ describe 'apache::mod::ssl', type: :class do
     it { is_expected.to contain_class('apache::params') }
     it { is_expected.to contain_apache__mod('ssl') }
     it { is_expected.not_to contain_package('libapache2-mod-ssl') }
-    it { is_expected.to contain_file('ssl.conf').with_content(%r{SSLProtocol all -SSLv2 -SSLv3}) }
+    it { is_expected.to contain_file('ssl.conf').with_content(%r{SSLProtocol all -SSLv3}) }
   end
   context 'on a FreeBSD OS' do
     include_examples 'FreeBSD 9'
@@ -91,7 +95,7 @@ describe 'apache::mod::ssl', type: :class do
   end
   # Template config doesn't vary by distro
   context 'on all distros' do
-    include_examples 'RedHat 6'
+    include_examples 'RedHat 8'
 
     context 'not setting ssl_pass_phrase_dialog' do
       it { is_expected.to contain_file('ssl.conf').with_content(%r{^  SSLPassPhraseDialog builtin$}) }
@@ -277,7 +281,7 @@ describe 'apache::mod::ssl', type: :class do
         }
       end
 
-      it { is_expected.to contain_file('ssl.conf').with_content(%r{^  SSLMutex posixsem$}) }
+      it { is_expected.to contain_file('ssl.conf').with_content(%r{^  Mutex posixsem$}) }
     end
     context 'setting ssl_sessioncache' do
       let :params do

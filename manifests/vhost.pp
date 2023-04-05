@@ -1951,7 +1951,7 @@ define apache::vhost (
   Optional[Variant[String, Array[String]]] $comment                                   = undef,
   Hash $define                                                                        = {},
   Boolean $auth_oidc                                                                  = false,
-  Optional[Apache::OIDCSettings] $oidc_settings                                       = undef,
+  Apache::OIDCSettings $oidc_settings                                                 = {},
   Optional[Variant[Boolean, String]] $mdomain                                         = undef,
   Optional[String] $phpfpm_name                                                       = undef,
   Optional[Integer] $phpfpm_port                                                      = undef,
@@ -2522,11 +2522,12 @@ define apache::vhost (
 
   # Template uses:
   # - $rewrites
+  # - $rewrite_inherit
   # - $rewrite_base
   # - $rewrite_rule
   # - $rewrite_cond
   # - $rewrite_map
-  if (! empty($rewrites) or $rewrite_rule) and $ensure == 'present' {
+  if (! empty($rewrites) or $rewrite_rule or $rewrite_inherit) and $ensure == 'present' {
     include apache::mod::rewrite
 
     concat::fragment { "${name}-rewrite":
@@ -2711,7 +2712,7 @@ define apache::vhost (
     }
   }
 
-  if ($h2_copy_files != undef or $h2_direct != undef or $h2_early_hints != undef or $h2_max_session_streams != undef or $h2_modern_tls_only != undef or $h2_push != undef or $h2_push_diary_size != undef or $h2_push_priority != [] or $h2_push_resource != [] or $h2_serialize_headers != undef or $h2_stream_max_mem_size != undef or $h2_tls_cool_down_secs != undef or $h2_tls_warm_up_size != undef or $h2_upgrade != undef or $h2_window_size != undef) and $ensure == 'present' {
+  if ('h2' in $protocols or 'h2c' in $protocols or $h2_copy_files != undef or $h2_direct != undef or $h2_early_hints != undef or $h2_max_session_streams != undef or $h2_modern_tls_only != undef or $h2_push != undef or $h2_push_diary_size != undef or $h2_push_priority != [] or $h2_push_resource != [] or $h2_serialize_headers != undef or $h2_stream_max_mem_size != undef or $h2_tls_cool_down_secs != undef or $h2_tls_warm_up_size != undef or $h2_upgrade != undef or $h2_window_size != undef) and $ensure == 'present' {
     include apache::mod::http2
 
     concat::fragment { "${name}-http2":

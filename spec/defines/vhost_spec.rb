@@ -1287,7 +1287,8 @@ describe 'apache::vhost', type: :define do
             ).with_content(%r{## Proxy rules})
           }
         end
-        context 'proxy_dest_match' do
+
+        context 'proxy_dest_match and no proxy_dest_reverse_match' do
           let :params do
             {
               'docroot'          => '/rspec/docroot',
@@ -1296,7 +1297,24 @@ describe 'apache::vhost', type: :define do
           end
 
           it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(%r{## Proxy rules}) }
+          it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(%r{ProxyPassMatch\s+/\s+//}) }
+          it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(%r{ProxyPassReverse\s+/\s+/}) }
         end
+
+        context 'proxy_dest_match and proxy_dest_reverse_match' do
+          let :params do
+            {
+              'docroot'                  => '/rspec/docroot',
+              'proxy_dest_match'         => '/',
+              'proxy_dest_reverse_match' => 'http://localhost:8180',
+            }
+          end
+
+          it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(%r{## Proxy rules}) }
+          it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(%r{ProxyPassMatch\s+/\s+//}) }
+          it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(%r{ProxyPassReverse\s+/\s+http://localhost:8180/}) }
+        end
+
         context 'not everything can be set together...' do
           let :params do
             {
@@ -1690,10 +1708,33 @@ describe 'apache::vhost', type: :define do
             it { is_expected.to raise_error(Puppet::Error) }
           end
           context 'empty rewrites' do
-            let(:params) { super().merge('rewrites' => []) }
+            let(:params) do
+              super().merge(
+                'rewrite_inherit' => false,
+                'rewrites' => [],
+              )
+            end
 
-            it { is_expected.to compile }
+            it {
+              is_expected.to compile
+              is_expected.not_to contain_concat__fragment('rspec.example.com-rewrite')
+            }
           end
+          context 'empty rewrites_with_rewrite_inherit' do
+            let(:params) do
+              super().merge(
+                'rewrite_inherit' => true,
+                'rewrites' => [],
+              )
+            end
+
+            it {
+              is_expected.to contain_concat__fragment('rspec.example.com-rewrite').with(
+                content: %r{^\s+RewriteOptions Inherit$},
+              )
+            }
+          end
+
           context 'bad error_log_format flag' do
             let :params do
               super().merge(

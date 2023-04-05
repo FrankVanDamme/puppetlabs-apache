@@ -19,7 +19,7 @@ describe 'apache::mod::security', type: :class do
             )
           }
           it {
-            is_expected.to contain_apache__mod('unique_id_module').with(
+            is_expected.to contain_apache__mod('unique_id').with(
               id: 'unique_id_module',
               lib: 'mod_unique_id.so',
             )
@@ -81,6 +81,8 @@ describe 'apache::mod::security', type: :class do
                 secdefaultaction: 'deny,status:406,nolog,auditlog',
                 secrequestbodyaccess: 'Off',
                 secresponsebodyaccess: 'On',
+                secrequestbodylimitaction: 'ProcessPartial',
+                secresponsebodylimitaction: 'Reject',
               }
             end
 
@@ -90,6 +92,8 @@ describe 'apache::mod::security', type: :class do
             it { is_expected.to contain_file('security.conf').with_content %r{^\s+SecAuditLogStorageDir /var/log/httpd/audit$} }
             it { is_expected.to contain_file('security.conf').with_content %r{^\s+SecRequestBodyAccess Off$} }
             it { is_expected.to contain_file('security.conf').with_content %r{^\s+SecResponseBodyAccess On$} }
+            it { is_expected.to contain_file('security.conf').with_content %r{^\s+SecRequestBodyLimitAction ProcessPartial$} }
+            it { is_expected.to contain_file('security.conf').with_content %r{^\s+SecResponseBodyLimitAction Reject$} }
             it { is_expected.to contain_file('/etc/httpd/modsecurity.d/security_crs.conf').with_content %r{^\s*SecDefaultAction "phase:2,deny,status:406,nolog,auditlog"$} }
             it {
               is_expected.to contain_file('bar.conf').with(
@@ -140,6 +144,10 @@ describe 'apache::mod::security', type: :class do
               {
                 paranoia_level: 1,
                 executing_paranoia_level: 2,
+                enable_dos_protection: true,
+                dos_burst_time_slice: 30,
+                dos_counter_threshold: 120,
+                dos_block_timeout: 300,
               }
             end
 
@@ -148,6 +156,18 @@ describe 'apache::mod::security', type: :class do
                 %r{^SecAction \\\n\s+\"id:900000,\\\n\s+phase:1,\\\n\s+nolog,\\\n\s+pass,\\\n\s+t:none,\\\n\s+setvar:tx.paranoia_level=1"$}
               is_expected.to contain_file('/etc/httpd/modsecurity.d/security_crs.conf').with_content \
                 %r{^SecAction \\\n\s+\"id:900001,\\\n\s+phase:1,\\\n\s+nolog,\\\n\s+pass,\\\n\s+t:none,\\\n\s+setvar:tx.executing_paranoia_level=2"$}
+              is_expected.to contain_file('/etc/httpd/modsecurity.d/security_crs.conf').with_content \
+                %r{
+                  ^SecAction\ \\\n
+                  \s+\"id:900700,\\\n
+                  \s+phase:1,\\\n
+                  \s+nolog,\\\n
+                  \s+pass,\\\n
+                  \s+t:none,\\\n
+                  \s+setvar:'tx.dos_burst_time_slice=30',\\\n
+                  \s+setvar:'tx.dos_counter_threshold=120',\\\n
+                  \s+setvar:'tx.dos_block_timeout=300'"$
+              }x
             }
           end
 
@@ -173,7 +193,7 @@ describe 'apache::mod::security', type: :class do
             )
           }
           it {
-            is_expected.to contain_apache__mod('unique_id_module').with(
+            is_expected.to contain_apache__mod('unique_id').with(
               id: 'unique_id_module',
               lib: 'mod_unique_id.so',
             )
@@ -233,6 +253,8 @@ describe 'apache::mod::security', type: :class do
                 secdefaultaction: 'deny,status:406,nolog,auditlog',
                 secrequestbodyaccess: 'Off',
                 secresponsebodyaccess: 'On',
+                secrequestbodylimitaction: 'ProcessPartial',
+                secresponsebodylimitaction: 'Reject',
               }
             end
 
@@ -243,6 +265,8 @@ describe 'apache::mod::security', type: :class do
               it { is_expected.to contain_file('security.conf').with_content %r{^\s+SecAuditLogStorageDir /var/log/httpd/audit$} }
               it { is_expected.to contain_file('security.conf').with_content %r{^\s+SecRequestBodyAccess Off$} }
               it { is_expected.to contain_file('security.conf').with_content %r{^\s+SecResponseBodyAccess On$} }
+              it { is_expected.to contain_file('security.conf').with_content %r{^\s+SecRequestBodyLimitAction ProcessPartial$} }
+              it { is_expected.to contain_file('security.conf').with_content %r{^\s+SecResponseBodyLimitAction Reject$} }
               it { is_expected.to contain_file('/etc/modsecurity/security_crs.conf').with_content %r{^\s*SecDefaultAction "phase:2,deny,status:406,nolog,auditlog"$} }
               it {
                 is_expected.to contain_file('bar.conf').with(
@@ -302,6 +326,10 @@ describe 'apache::mod::security', type: :class do
               {
                 paranoia_level: 1,
                 executing_paranoia_level: 1,
+                enable_dos_protection: true,
+                dos_burst_time_slice: 30,
+                dos_counter_threshold: 120,
+                dos_block_timeout: 300,
               }
             end
 
@@ -310,6 +338,18 @@ describe 'apache::mod::security', type: :class do
                 %r{^SecAction \\\n\s+\"id:900000,\\\n\s+phase:1,\\\n\s+nolog,\\\n\s+pass,\\\n\s+t:none,\\\n\s+setvar:tx.paranoia_level=1"$}
               is_expected.to contain_file('/etc/modsecurity/security_crs.conf').with_content \
                 %r{^SecAction \\\n\s+\"id:900001,\\\n\s+phase:1,\\\n\s+nolog,\\\n\s+pass,\\\n\s+t:none,\\\n\s+setvar:tx.executing_paranoia_level=1"$}
+              is_expected.to contain_file('/etc/modsecurity/security_crs.conf').with_content \
+                %r{
+                  ^SecAction\ \\\n
+                  \s+\"id:900700,\\\n
+                  \s+phase:1,\\\n
+                  \s+nolog,\\\n
+                  \s+pass,\\\n
+                  \s+t:none,\\\n
+                  \s+setvar:'tx.dos_burst_time_slice=30',\\\n
+                  \s+setvar:'tx.dos_counter_threshold=120',\\\n
+                  \s+setvar:'tx.dos_block_timeout=300'"$
+              }x
             }
           end
 

@@ -434,6 +434,9 @@
 #   The `limitreqfieldsize` parameter sets the maximum ammount of _bytes_ that will
 #   be allowed within a request header.
 #
+# @param limitreqline
+#   The 'limitreqline' parameter sets the limit on the allowed size of a client's HTTP request-line
+#
 # @param ip
 #   Specifies the ip address
 #
@@ -445,8 +448,11 @@
 #   Whether the additional config files in `/etc/apache2/conf-enabled` should be managed.
 # 
 # @param vhost_enable_dir
-#   Set's whether the vhost definitions will be stored in sites-availible and if
+#   Set's the vhost definitions which will be stored in sites-availible and if
 #   they will be symlinked to and from sites-enabled.
+# 
+# @param manage_vhost_enable_dir
+#   Overides the vhost_enable_dir inherited parameters and allows it to be disabled
 #
 # @param mod_enable_dir
 #   Set's whether the mods-enabled directory should be managed.
@@ -492,7 +498,7 @@ class apache (
   Boolean $purge_configs                                                     = true,
   Optional[Boolean] $purge_vhost_dir                                         = undef,
   Boolean $purge_vdir                                                        = false,
-  String $serveradmin                                                        = 'root@localhost',
+  Optional[String[1]] $serveradmin                                           = undef,
   Enum['On', 'Off', 'on', 'off'] $sendfile                                   = 'On',
   Optional[Enum['On', 'Off', 'on', 'off']] $ldap_verify_server_cert          = undef,
   Optional[String] $ldap_trusted_mode                                        = undef,
@@ -506,6 +512,7 @@ class apache (
   Optional[Stdlib::Absolutepath] $conf_enabled                               = $apache::params::conf_enabled,
   Stdlib::Absolutepath $vhost_dir                                            = $apache::params::vhost_dir,
   Optional[Stdlib::Absolutepath] $vhost_enable_dir                           = $apache::params::vhost_enable_dir,
+  Boolean $manage_vhost_enable_dir                                           = true,
   Hash $mod_libs                                                             = $apache::params::mod_libs,
   Hash $mod_packages                                                         = $apache::params::mod_packages,
   String $vhost_include_pattern                                              = $apache::params::vhost_include_pattern,
@@ -528,6 +535,7 @@ class apache (
   Integer $max_keepalive_requests                                            = $apache::params::max_keepalive_requests,
   Integer $limitreqfieldsize                                                 = 8190,
   Integer $limitreqfields                                                    = 100,
+  Optional[Integer] $limitreqline                                            = undef,
   Stdlib::Absolutepath $logroot                                              = $apache::params::logroot,
   Optional[Stdlib::Filemode] $logroot_mode                                   = $apache::params::logroot_mode,
   Optional[String] $logroot_owner                                            = $apache::params::logroot_owner,
@@ -639,7 +647,9 @@ class apache (
     path => '/bin:/sbin:/usr/bin:/usr/sbin',
   }
 
+  $confd_command = ['mkdir', $confd_dir]
   exec { "mkdir ${confd_dir}":
+    command => $confd_command,
     creates => $confd_dir,
     require => Package['httpd'],
   }
@@ -664,7 +674,9 @@ class apache (
   }
 
   if ! defined(File[$mod_dir]) {
+    $mod_command = ['mkdir', $mod_dir]
     exec { "mkdir ${mod_dir}":
+      command => $mod_command,
       creates => $mod_dir,
       require => Package['httpd'],
     }
@@ -682,7 +694,9 @@ class apache (
 
   if $mod_enable_dir and ! defined(File[$mod_enable_dir]) {
     $mod_load_dir = $mod_enable_dir
+    $mod_enable_command = ['mkdir', $mod_enable_dir]
     exec { "mkdir ${mod_enable_dir}":
+      command => $mod_enable_command,
       creates => $mod_enable_dir,
       require => Package['httpd'],
     }
@@ -698,7 +712,9 @@ class apache (
   }
 
   if ! defined(File[$vhost_dir]) {
+    $vhost_command = ['mkdir', $vhost_dir]
     exec { "mkdir ${vhost_dir}":
+      command => $vhost_command,
       creates => $vhost_dir,
       require => Package['httpd'],
     }
@@ -711,9 +727,11 @@ class apache (
     }
   }
 
-  if $vhost_enable_dir and ! defined(File[$vhost_enable_dir]) {
+  if $vhost_enable_dir and ! defined(File[$vhost_enable_dir]) and $manage_vhost_enable_dir {
     $vhost_load_dir = $vhost_enable_dir
+    $vhost_load_command = ['mkdir', $vhost_load_dir]
     exec { "mkdir ${vhost_load_dir}":
+      command => $vhost_load_command,
       creates => $vhost_load_dir,
       require => Package['httpd'],
     }
@@ -819,6 +837,10 @@ class apache (
     }
     if $mpm_module and $mpm_module != 'false' { # lint:ignore:quoted_booleans
       include "::apache::mod::${mpm_module}"
+    }
+
+    if 'h2' in $protocols or 'h2c' in $protocols {
+      include apache::mod::http2
     }
 
     $default_vhost_ensure = $default_vhost ? {

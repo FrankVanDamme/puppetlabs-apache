@@ -859,6 +859,10 @@ describe 'apache::vhost define' do
         docroot    => '/tmp',
         options    => ['Indexes','FollowSymLinks', 'ExecCGI'],
       }
+      apache::vhost { 'test.empty_options':
+        docroot    => '/tmp',
+        options    => [],
+      }
     MANIFEST
     it 'applies cleanly' do
       apply_manifest(pp, catch_failures: true)
@@ -948,6 +952,10 @@ describe 'apache::vhost define' do
     describe file("#{apache_hash['vhost_dir']}/25-test.options.conf") do
       it { is_expected.to be_file }
       it { is_expected.to contain 'Options Indexes FollowSymLinks ExecCGI' }
+    end
+    describe file("#{apache_hash['vhost_dir']}/25-test.empty_options.conf") do
+      it { is_expected.to be_file }
+      it { is_expected.not_to contain 'Options' }
     end
   end
 
@@ -1163,36 +1171,33 @@ describe 'apache::vhost define' do
 
   describe 'additional_includes' do
     pp = <<-MANIFEST
-      if $::osfamily == 'RedHat' and "$::selinux" == "true" {
-        $semanage_package = $::operatingsystemmajrelease ? {
-          '6'     => 'policycoreutils-python',
-          '7'     => 'policycoreutils-python',
-          default => 'policycoreutils-python-utils',
-        }
-        package { $semanage_package: ensure => installed }
+      if $facts['osfamily'] == 'RedHat' and $facts['selinux'] {
         exec { 'set_apache_defaults':
-          command => 'semanage fcontext -a -t httpd_sys_content_t "/apache_spec(/.*)?"',
+          command => 'semanage fcontext --add -t httpd_sys_content_t "/apache_spec/docroot(/.*)?"',
+          unless  => 'semanage fcontext --list | grep /apache_spec/docroot | grep httpd_sys_content_t',
           path    => '/bin:/usr/bin/:/sbin:/usr/sbin',
-          require => Package[$semanage_package],
         }
         exec { 'restorecon_apache':
           command => 'restorecon -Rv /apache_spec',
           path    => '/bin:/usr/bin/:/sbin:/usr/sbin',
-          before  => Service['httpd'],
-          require => Class['apache'],
+          before      => Service['httpd'],
+          require     => [File['/apache_spec/include'], Class['apache']],
+          subscribe   => Exec['set_apache_defaults'],
+          refreshonly => true,
         }
       }
       class { 'apache': }
       host { 'test.server': ip => '127.0.0.1' }
-      file { '/apache_spec': ensure => directory, }
+      file { ['/apache_spec', '/apache_spec/docroot']: ensure => directory, }
       file { '/apache_spec/include': ensure => present, content => '#additional_includes' }
       apache::vhost { 'test.server':
-        docroot             => '/apache_spec',
+        docroot             => '/apache_spec/docroot',
         additional_includes => '/apache_spec/include',
       }
     MANIFEST
-    it 'applies cleanly' do
-      apply_manifest(pp, catch_failures: false)
+
+    it 'behaves idempotently' do
+      idempotent_apply(pp)
     end
 
     describe file("#{apache_hash['vhost_dir']}/25-test.server.conf") do

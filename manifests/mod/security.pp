@@ -98,49 +98,80 @@
 # @param secrequestbodyaccess
 #   Toggle SecRequestBodyAccess On or Off
 # 
+# @param secrequestbodylimitaction
+#   Controls what happens once a request body limit, configured with
+#   SecRequestBodyLimit, is encountered
+# 
 # @param secresponsebodyaccess
 #   Toggle SecResponseBodyAccess On or Off
+#
+# @param secresponsebodylimitaction
+#   Controls what happens once a response body limit, configured with
+#   SecResponseBodyLimitAction, is encountered. 
 # 
 # @param manage_security_crs
 #   Toggles whether to manage ModSecurity Core Rule Set 
 #
+# @param enable_dos_protection
+#   Toggles the optional OWASP ModSecurity Core Rule Set DOS protection rule
+#   (rule id 900700)
+#
+# @param dos_burst_time_slice
+#   Configures time in which a burst is measured for the OWASP ModSecurity Core Rule Set DOS protection rule
+#   (rule id 900700)
+#
+# @param dos_counter_threshold
+#   Configures the amount of requests that can be made within dos_burst_time_slice before it is considered a burst in
+#   the OWASP ModSecurity Core Rule Set DOS protection rule (rule id 900700)
+#
+# @param dos_block_timeout
+#   Configures how long the client should be blocked when the dos_counter_threshold is exceeded in the OWASP
+#   ModSecurity Core Rule Set DOS protection rule (rule id 900700)
+#
 # @see https://github.com/SpiderLabs/ModSecurity/wiki for additional documentation.
+# @see https://coreruleset.org/docs/ for addional documentation
 #
 class apache::mod::security (
-  Stdlib::Absolutepath $logroot                         = $apache::params::logroot,
-  Integer $version                                      = $apache::params::modsec_version,
-  Optional[String] $crs_package                         = $apache::params::modsec_crs_package,
-  Array[String] $activated_rules                        = $apache::params::modsec_default_rules,
-  Boolean $custom_rules                                 = $apache::params::modsec_custom_rules,
-  Optional[Array[String]] $custom_rules_set             = $apache::params::modsec_custom_rules_set,
-  Stdlib::Absolutepath $modsec_dir                      = $apache::params::modsec_dir,
-  String $modsec_secruleengine                          = $apache::params::modsec_secruleengine,
-  String $audit_log_relevant_status                     = '^(?:5|4(?!04))',
-  String $audit_log_parts                               = $apache::params::modsec_audit_log_parts,
-  String $audit_log_type                                = $apache::params::modsec_audit_log_type,
-  Optional[Stdlib::Absolutepath] $audit_log_storage_dir = undef,
-  Integer $secpcrematchlimit                            = $apache::params::secpcrematchlimit,
-  Integer $secpcrematchlimitrecursion                   = $apache::params::secpcrematchlimitrecursion,
-  String $allowed_methods                               = 'GET HEAD POST OPTIONS',
-  String $content_types                                 = 'application/x-www-form-urlencoded|multipart/form-data|text/xml|application/xml|application/x-amf',
-  String $restricted_extensions                         = '.asa/ .asax/ .ascx/ .axd/ .backup/ .bak/ .bat/ .cdx/ .cer/ .cfg/ .cmd/ .com/ .config/ .conf/ .cs/ .csproj/ .csr/ .dat/ .db/ .dbf/ .dll/ .dos/ .htr/ .htw/ .ida/ .idc/ .idq/ .inc/ .ini/ .key/ .licx/ .lnk/ .log/ .mdb/ .old/ .pass/ .pdb/ .pol/ .printer/ .pwd/ .resources/ .resx/ .sql/ .sys/ .vb/ .vbs/ .vbproj/ .vsdisco/ .webinfo/ .xsd/ .xsx/',
-  String $restricted_headers                            = '/Proxy-Connection/ /Lock-Token/ /Content-Range/ /Translate/ /via/ /if/',
-  String $secdefaultaction                              = 'deny',
-  Integer $inbound_anomaly_threshold                    = 5,
-  Integer $outbound_anomaly_threshold                   = 4,
-  Integer $critical_anomaly_score                       = 5,
-  Integer $error_anomaly_score                          = 4,
-  Integer $warning_anomaly_score                        = 3,
-  Integer $notice_anomaly_score                         = 2,
-  Integer $secrequestmaxnumargs                         = 255,
-  Integer $secrequestbodylimit                          = 13107200,
-  Integer $secrequestbodynofileslimit                   = 131072,
-  Integer $secrequestbodyinmemorylimit                  = 131072,
-  Integer[1,4] $paranoia_level                          = 1,
-  Integer[1,4] $executing_paranoia_level                = $paranoia_level,
-  Enum['On', 'Off'] $secrequestbodyaccess               = 'On',
-  Enum['On', 'Off'] $secresponsebodyaccess              = 'Off',
-  Boolean $manage_security_crs                          = true,
+  Stdlib::Absolutepath $logroot                                = $apache::params::logroot,
+  Integer $version                                             = $apache::params::modsec_version,
+  Optional[String] $crs_package                                = $apache::params::modsec_crs_package,
+  Array[String] $activated_rules                               = $apache::params::modsec_default_rules,
+  Boolean $custom_rules                                        = $apache::params::modsec_custom_rules,
+  Optional[Array[String]] $custom_rules_set                    = $apache::params::modsec_custom_rules_set,
+  Stdlib::Absolutepath $modsec_dir                             = $apache::params::modsec_dir,
+  String $modsec_secruleengine                                 = $apache::params::modsec_secruleengine,
+  String $audit_log_relevant_status                            = '^(?:5|4(?!04))',
+  String $audit_log_parts                                      = $apache::params::modsec_audit_log_parts,
+  String $audit_log_type                                       = $apache::params::modsec_audit_log_type,
+  Optional[Stdlib::Absolutepath] $audit_log_storage_dir        = undef,
+  Integer $secpcrematchlimit                                   = $apache::params::secpcrematchlimit,
+  Integer $secpcrematchlimitrecursion                          = $apache::params::secpcrematchlimitrecursion,
+  String $allowed_methods                                      = 'GET HEAD POST OPTIONS',
+  String $content_types                                        = 'application/x-www-form-urlencoded|multipart/form-data|text/xml|application/xml|application/x-amf',
+  String $restricted_extensions                                = '.asa/ .asax/ .ascx/ .axd/ .backup/ .bak/ .bat/ .cdx/ .cer/ .cfg/ .cmd/ .com/ .config/ .conf/ .cs/ .csproj/ .csr/ .dat/ .db/ .dbf/ .dll/ .dos/ .htr/ .htw/ .ida/ .idc/ .idq/ .inc/ .ini/ .key/ .licx/ .lnk/ .log/ .mdb/ .old/ .pass/ .pdb/ .pol/ .printer/ .pwd/ .resources/ .resx/ .sql/ .sys/ .vb/ .vbs/ .vbproj/ .vsdisco/ .webinfo/ .xsd/ .xsx/',
+  String $restricted_headers                                   = '/Proxy-Connection/ /Lock-Token/ /Content-Range/ /Translate/ /via/ /if/',
+  String $secdefaultaction                                     = 'deny',
+  Integer $inbound_anomaly_threshold                           = 5,
+  Integer $outbound_anomaly_threshold                          = 4,
+  Integer $critical_anomaly_score                              = 5,
+  Integer $error_anomaly_score                                 = 4,
+  Integer $warning_anomaly_score                               = 3,
+  Integer $notice_anomaly_score                                = 2,
+  Integer $secrequestmaxnumargs                                = 255,
+  Integer $secrequestbodylimit                                 = 13107200,
+  Integer $secrequestbodynofileslimit                          = 131072,
+  Integer $secrequestbodyinmemorylimit                         = 131072,
+  Integer[1,4] $paranoia_level                                 = 1,
+  Integer[1,4] $executing_paranoia_level                       = $paranoia_level,
+  Enum['On', 'Off'] $secrequestbodyaccess                      = 'On',
+  Enum['On', 'Off'] $secresponsebodyaccess                     = 'Off',
+  Enum['Reject', 'ProcessPartial'] $secrequestbodylimitaction  = 'Reject',
+  Enum['Reject', 'ProcessPartial'] $secresponsebodylimitaction = 'ProcessPartial',
+  Boolean $manage_security_crs                                 = true,
+  Boolean $enable_dos_protection                               = true,
+  Integer[1, default] $dos_burst_time_slice                    = 60,
+  Integer[1, default] $dos_counter_threshold                   = 100,
+  Integer[1, default] $dos_block_timeout                       = 600,
 ) inherits apache::params {
   include apache
 
@@ -179,7 +210,7 @@ class apache::mod::security (
     lib => 'mod_security2.so',
   }
 
-  ::apache::mod { 'unique_id_module':
+  ::apache::mod { 'unique_id':
     id  => 'unique_id_module',
     lib => 'mod_unique_id.so',
   }
@@ -207,6 +238,8 @@ class apache::mod::security (
   # - secrequestbodyinmemorylimit
   # - secrequestbodyaccess
   # - secresponsebodyaccess
+  # - secrequestbodylimitaction
+  # - secresponsebodylimitaction
   file { 'security.conf':
     ensure  => file,
     content => template('apache/mod/security.conf.erb'),
@@ -278,6 +311,10 @@ class apache::mod::security (
     # - $restricted_extensions
     # - $restricted_headers
     # - $secrequestmaxnumargs
+    # - $enable_dos_protection
+    # - $dos_burst_time_slice
+    # - $dos_counter_threshold
+    # - $dos_block_timeout
     file { "${modsec_dir}/security_crs.conf":
       ensure  => file,
       content => template('apache/mod/security_crs.conf.erb'),

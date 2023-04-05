@@ -39,6 +39,7 @@ describe 'apache', type: :class do
         'purge' => 'false'
       ).that_notifies('Class[Apache::Service]').that_requires('Package[httpd]')
     }
+    it { is_expected.to contain_file('/etc/apache2/apache2.conf').without_content(%r{ServerAdmin}) }
     it {
       is_expected.to contain_concat('/etc/apache2/ports.conf').with(
         'owner' => 'root', 'group' => 'root',
@@ -81,6 +82,16 @@ describe 'apache', type: :class do
       end
 
       it { is_expected.to contain_file('/etc/apache2/apache2.conf').with_content %r{^IncludeOptional "/etc/apache2/conf\.d/\*\.conf"$} }
+    end
+
+    context 'with serveradmin' do
+      let(:params) do
+        {
+          serveradmin: 'admin@example.com',
+        }
+      end
+
+      it { is_expected.to contain_file('/etc/apache2/apache2.conf').with_content %r{^ServerAdmin admin@example\.com$} }
     end
 
     context 'when specifying slash encoding behaviour' do
@@ -237,7 +248,7 @@ describe 'apache', type: :class do
         { mpm_module: 'worker' }
       end
 
-      it { is_expected.to contain_exec('/usr/sbin/a2dismod event') }
+      it { is_expected.to contain_exec('/usr/sbin/a2dismod mpm_event') }
       it { is_expected.to contain_exec('/usr/sbin/a2dismod prefork') }
     end
 
@@ -725,7 +736,7 @@ describe 'apache', type: :class do
     }
   end
   context 'on all OSes' do
-    include_examples 'RedHat 6'
+    include_examples 'RedHat 8'
 
     context 'with a custom apache_name parameter' do
       let :params do
