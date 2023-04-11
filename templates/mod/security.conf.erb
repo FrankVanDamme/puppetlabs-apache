@@ -54,13 +54,13 @@
     <%- end -%>
     SecArgumentSeparator &
     SecCookieFormat 0
-<%- if scope.lookupvar('::osfamily') == 'Debian' -%>
+<%- if scope['facts']['os']['family'] == 'Debian' -%>
     SecDebugLog <%= @logroot %>/modsec_debug.log
     SecAuditLog <%= @logroot %>/modsec_audit.log
     SecTmpDir /var/cache/modsecurity
     SecDataDir /var/cache/modsecurity
     SecUploadDir /var/cache/modsecurity
-<%- elsif scope.lookupvar('::osfamily') == 'Suse' -%>
+<%- elsif scope['facts']['os']['family'] == 'Suse' -%>
     SecDebugLog /var/log/apache2/modsec_debug.log
     SecAuditLog /var/log/apache2/modsec_audit.log
     SecTmpDir /var/lib/mod_security
@@ -76,11 +76,6 @@
     SecUploadKeepFiles Off
 
     # ModSecurity Core Rules Set configuration
-<%- if scope.function_versioncmp([scope.lookupvar('::apache::apache_version'), '2.4']) >= 0 -%>
     IncludeOptional <%= @modsec_dir %>/*.conf
     IncludeOptional <%= @modsec_dir %>/activated_rules/*.conf
-<%- else -%>
-    Include <%= @modsec_dir %>/*.conf
-    Include <%= @modsec_dir %>/activated_rules/*.conf
-<%- end -%>
 </IfModule>

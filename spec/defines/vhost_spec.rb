@@ -33,12 +33,6 @@ describe 'apache::vhost', type: :define do
           it { is_expected.to contain_class('apache') }
           it { is_expected.to contain_class('apache::params') }
           it { is_expected.to contain_apache__listen(params[:port]) }
-          # namebased virualhost is only created on apache 2.2 and older
-          if (os_facts[:os]['family'] == 'RedHat' && os_facts[:os]['release']['major'].to_i < 7) ||
-             (os_facts[:os]['name'] == 'Amazon') ||
-             (os_facts[:os]['name'] == 'SLES' && os_facts[:os]['release']['major'].to_i < 12)
-            it { is_expected.to contain_apache__namevirtualhost("*:#{params[:port]}") }
-          end
         end
         context 'set everything!' do
           let :params do
@@ -385,7 +379,7 @@ describe 'apache::vhost', type: :define do
               'request_headers'             => ['append MirrorID "mirror 12"'],
               'rewrites'                    => [
                 {
-                  'rewrite_rule' => ['^index\.html$ welcome.html'],
+                  'rewrite_rule' => ['^index.html$ rewrites.html'],
                 },
               ],
               'filters' => [
@@ -398,7 +392,7 @@ describe 'apache::vhost', type: :define do
                 'FilterProtocol COMPRESS  DEFLATE change=yes;byteranges=no',
               ],
               'rewrite_base'                => '/',
-              'rewrite_rule'                => '^index\.html$ welcome.html',
+              'rewrite_rule'                => '^index.html$ welcome.html',
               'rewrite_cond'                => ['%{HTTP_USER_AGENT} ^MSIE'],
               'rewrite_inherit'             => true,
               'setenv'                      => ['FOO=/bin/true'],
@@ -433,7 +427,6 @@ describe 'apache::vhost', type: :define do
               'wsgi_chunked_request'        => 'On',
               'action'                      => 'foo',
               'additional_includes'         => '/custom/path/includes',
-              'apache_version'              => '2.4',
               'use_optional_includes'       => true,
               'suexec_user_group'           => 'root root',
               'allow_encoded_slashes'       => 'nodecode',
@@ -740,9 +733,11 @@ describe 'apache::vhost', type: :define do
           }
           it { is_expected.to contain_concat__fragment('rspec.example.com-redirect') }
           it {
-            is_expected.to contain_concat__fragment('rspec.example.com-rewrite').with(
-              content: %r{^\s+RewriteOptions Inherit$},
-            )
+            is_expected.to contain_concat__fragment('rspec.example.com-rewrite')
+              .with_content(%r{^\s+RewriteEngine On$})
+              .with_content(%r{^\s+RewriteOptions Inherit$})
+              .with_content(%r{^\s+RewriteBase /})
+              .with_content(%r{^\s+RewriteRule \^index\.html\$ rewrites.html$})
           }
           it { is_expected.to contain_concat__fragment('rspec.example.com-scriptalias') }
           it { is_expected.to contain_concat__fragment('rspec.example.com-serveralias') }
@@ -908,6 +903,113 @@ describe 'apache::vhost', type: :define do
               content: %r{^MDomain example\.com example\.net auto$},
             )
           }
+        end
+        context 'vhost with proxy_add_headers true' do
+          let :params do
+            {
+              'docroot'                     => '/var/www/foo',
+              'manage_docroot'              => false,
+              'virtual_docroot'             => true,
+              'virtual_use_default_docroot' => false,
+              'port'                        => 8080,
+              'ip'                          => '127.0.0.1',
+              'ip_based'                    => true,
+              'add_listen'                  => false,
+              'serveradmin'                 => 'foo@localhost',
+              'priority'                    => 30,
+              'default_vhost'               => true,
+              'servername'                  => 'example.com',
+              'serveraliases'               => ['test-example.com'],
+              'options'                     => ['MultiView'],
+              'override'                    => ['All'],
+              'directoryindex'              => 'index.html',
+              'vhost_name'                  => 'test',
+              'proxy_add_headers'           => true,
+            }
+          end
+
+          it { is_expected.to compile }
+          it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(%r{ProxyAddHeaders On}) }
+        end
+        context 'vhost with proxy_add_headers false' do
+          let :params do
+            {
+              'docroot'                     => '/var/www/foo',
+              'manage_docroot'              => false,
+              'virtual_docroot'             => true,
+              'virtual_use_default_docroot' => false,
+              'port'                        => 8080,
+              'ip'                          => '127.0.0.1',
+              'ip_based'                    => true,
+              'add_listen'                  => false,
+              'serveradmin'                 => 'foo@localhost',
+              'priority'                    => 30,
+              'default_vhost'               => true,
+              'servername'                  => 'example.com',
+              'serveraliases'               => ['test-example.com'],
+              'options'                     => ['MultiView'],
+              'override'                    => ['All'],
+              'directoryindex'              => 'index.html',
+              'vhost_name'                  => 'test',
+              'proxy_add_headers'           => false,
+            }
+          end
+
+          it { is_expected.to compile }
+          it { is_expected.to contain_concat__fragment('rspec.example.com-proxy').with_content(%r{ProxyAddHeaders Off}) }
+        end
+        context 'vhost without proxy' do
+          let :params do
+            {
+              'docroot'                     => '/var/www/foo',
+              'manage_docroot'              => false,
+              'virtual_docroot'             => true,
+              'virtual_use_default_docroot' => false,
+              'port'                        => 8080,
+              'ip'                          => '127.0.0.1',
+              'ip_based'                    => true,
+              'add_listen'                  => false,
+              'serveradmin'                 => 'foo@localhost',
+              'priority'                    => 30,
+              'default_vhost'               => true,
+              'servername'                  => 'example.com',
+              'serveraliases'               => ['test-example.com'],
+              'options'                     => ['MultiView'],
+              'override'                    => ['All'],
+              'directoryindex'              => 'index.html',
+              'vhost_name'                  => 'test',
+            }
+          end
+
+          it { is_expected.to compile }
+          it { is_expected.not_to contain_concat__fragment('rspec.example.com-proxy') }
+        end
+        context 'vhost without proxy_add_headers' do
+          let :params do
+            {
+              'docroot'                     => '/var/www/foo',
+              'manage_docroot'              => false,
+              'virtual_docroot'             => true,
+              'virtual_use_default_docroot' => false,
+              'port'                        => 8080,
+              'ip'                          => '127.0.0.1',
+              'ip_based'                    => true,
+              'add_listen'                  => false,
+              'serveradmin'                 => 'foo@localhost',
+              'priority'                    => 30,
+              'default_vhost'               => true,
+              'servername'                  => 'example.com',
+              'serveraliases'               => ['test-example.com'],
+              'options'                     => ['MultiView'],
+              'override'                    => ['All'],
+              'directoryindex'              => 'index.html',
+              'vhost_name'                  => 'test',
+              'proxy_preserve_host'         => true,
+            }
+          end
+
+          it { is_expected.to compile }
+          it { is_expected.not_to contain_concat__fragment('rspec.example.com-proxy').with_content(%r{ProxyAddHeaders}) }
         end
         context 'vhost with scheme and port in servername and use_servername_for_filenames' do
           let :params do
@@ -1625,26 +1727,10 @@ describe 'apache::vhost', type: :define do
           end
         end # access logs
         describe 'error logs format' do
-          context 'on Apache 2.2' do
-            let(:params) do
-              {
-                'docroot'         => '/rspec/docroot',
-                'apache_version'  => '2.2',
-                'error_log_format' => ['[%t] [%l] %7F: %E: [client\ %a] %M% ,\ referer\ %{Referer}i'],
-              }
-            end
-
-            it {
-              is_expected.to contain_concat__fragment('rspec.example.com-logging')
-                .without_content(%r{ErrorLogFormat})
-            }
-          end
-
           context 'single log format directive as a string' do
             let(:params) do
               {
                 'docroot'          => '/rspec/docroot',
-                'apache_version'   => '2.4',
                 'error_log_format' => ['[%t] [%l] %7F: %E: [client\ %a] %M% ,\ referer\ %{Referer}i'],
               }
             end
@@ -1660,7 +1746,6 @@ describe 'apache::vhost', type: :define do
             let(:params) do
               {
                 'docroot'          => '/rspec/docroot',
-                'apache_version'   => '2.4',
                 'error_log_format' => [
                   '[%{uc}t] [%-m:%-l] [R:%L] [C:%{C}L] %7F: %E: %M',
                   { '[%{uc}t] [R:%L] Request %k on C:%{c}L pid:%P tid:%T' => 'request' },
@@ -1729,9 +1814,25 @@ describe 'apache::vhost', type: :define do
             end
 
             it {
-              is_expected.to contain_concat__fragment('rspec.example.com-rewrite').with(
-                content: %r{^\s+RewriteOptions Inherit$},
+              is_expected.not_to contain_concat__fragment('rspec.example.com-rewrite')
+                .with_content(%r{^\s+RewriteOptions Inherit$})
+                .with_content(%r{^\s+RewriteEngine On$})
+                .with_content(%r{^\s+RewriteRule \^index\.html\$ welcome.html$})
+            }
+          end
+          context 'empty rewrites_without_rewrite_inherit' do
+            let(:params) do
+              super().merge(
+                'rewrite_inherit' => false,
+                'rewrites' => [],
               )
+            end
+
+            it {
+              is_expected.not_to contain_concat__fragment('rspec.example.com-rewrite')
+                .with_content(%r{^\s+RewriteEngine On$})
+                .with_content(%r{^\s+RewriteRule \^index\.html\$ welcome.html$})
+                .without(content: %r{^\s+RewriteOptions Inherit$})
             }
           end
 
@@ -1792,7 +1893,6 @@ describe 'apache::vhost', type: :define do
 
             it { is_expected.to compile }
             it { is_expected.to contain_concat('25-rspec.example.com.conf') }
-            # this works only with apache 2.4 and newer
             if (os_facts[:os]['family'] == 'RedHat' && os_facts[:os]['release']['major'].to_i > 6) ||
                (os_facts[:os]['name'] == 'SLES' && os_facts[:os]['release']['major'].to_i > 11)
               it {
@@ -1802,50 +1902,6 @@ describe 'apache::vhost', type: :define do
               }
             else
               it { is_expected.to contain_concat__fragment('rspec.example.com-directories') }
-            end
-          end
-
-          # the following style is only present on Apache 2.2
-          # That is used in SLES 11, RHEL6, Amazon Linux
-          if (os_facts[:os]['family'] == 'RedHat' && os_facts[:os]['release']['major'].to_i < 7) ||
-             (os_facts[:os]['name'] == 'Amazon') ||
-             (os_facts[:os]['name'] == 'SLES' && os_facts[:os]['release']['major'].to_i < 12)
-            context 'apache 2.2 access controls on directories' do
-              let :params do
-                {
-                  'docroot'         => '/var/www/foo',
-                  'directories'     => [
-                    {
-                      'path'     => '/var/www/foo',
-                      'provider' => 'files',
-                      'allow'    => 'from 127.0.0.5',
-                      'deny'     => 'from all',
-                      'order'    => 'deny,allow',
-                    },
-                    {
-                      'path'     => '/var/www/protected-files',
-                      'provider' => 'files',
-                      'allow'    => ['from 127.0.0.1', 'from 127.0.0.2'],
-                      'deny'     => ['from 127.0.0.3', 'from 127.0.0.4'],
-                      'satisfy'  => 'any',
-                    },
-                  ],
-                }
-              end
-
-              it { is_expected.to compile }
-              it { is_expected.to contain_concat('25-rspec.example.com.conf') }
-              it {
-                is_expected.to contain_concat__fragment('rspec.example.com-directories')
-                  .with_content(%r{^\s+Allow from 127\.0\.0\.1$})
-                  .with_content(%r{^\s+Allow from 127\.0\.0\.2$})
-                  .with_content(%r{^\s+Allow from 127\.0\.0\.5$})
-                  .with_content(%r{^\s+Deny from 127\.0\.0\.3$})
-                  .with_content(%r{^\s+Deny from 127\.0\.0\.4$})
-                  .with_content(%r{^\s+Deny from all$})
-                  .with_content(%r{^\s+Satisfy any$})
-                  .with_content(%r{^\s+Order deny,allow$})
-              }
             end
           end
 

@@ -1,21 +1,11 @@
 
   <%- scope.setvar('_template_scope', {}) -%>
+  <%- if @docroot -%>
   ## Directories, there should at least be a declaration for <%= @docroot %>
+  <%- else -%>
+  ## Directories
+  <%- end -%>
   <%- @_directories.each do |directory| -%>
-    <%- if scope.function_versioncmp([@apache_version, '2.4']) >= 0 -%>
-      <%- if directory['allow'] and ! [ false, 'false', '' ].include?(directory['allow']) -%>
-        <%- scope.function_warning(["Apache::Vhost: Using allow is deprecated in your Apache version"]) -%>
-      <%- end -%>
-      <%- if directory['deny'] and ! [ false, 'false', '' ].include?(directory['deny']) -%>
-        <%- scope.function_warning(["Apache::Vhost: Using deny is deprecated in your Apache version"]) -%>
-      <%- end -%>
-      <%- if directory['order'] and ! [ false, 'false', '' ].include?(directory['order']) -%>
-        <%- scope.function_warning(["Apache::Vhost: Using order is deprecated in your Apache version"]) -%>
-      <%- end -%>
-      <%- if directory['satisfy'] and ! [ false, 'false', '' ].include?(directory['satisfy']) -%>
-        <%- scope.function_warning(["Apache::Vhost: Using satisfy is deprecated in your Apache version"]) -%>
-      <%- end -%>
-    <%- end -%>
     <%- if directory['path'] and directory['path'] != '' -%>
       <%- if directory['provider'] and directory['provider'].match('(directory|location|files|proxy)') -%>
         <%- if /^(.*)match$/ =~ directory['provider'] -%>
@@ -478,7 +468,7 @@
       <%- directory_proxy_pass.flatten.compact.each do |proxy| -%>
     <%= proxy_pass -%> <%= proxy['url'] -%>
         <%- if proxy['params'] -%>
-          <%- proxy['params'].keys.sort.each do |key| -%> <%= key %>=<%= proxy['params'][key] -%>
+          <%- proxy['params'].sort.each do |key, value| -%> <%= key %>=<%= value -%>
           <%- end -%>
         <%- end -%>
         <%- if proxy['keywords'] %> <%= proxy['keywords'].join(' ') -%>

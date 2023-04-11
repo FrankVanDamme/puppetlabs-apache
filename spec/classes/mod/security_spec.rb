@@ -10,6 +10,13 @@ describe 'apache::mod::security', type: :class do
       end
 
       case facts[:os]['family']
+      when 'Suse'
+        context 'on Suse based systems' do
+          it {
+            is_expected.to contain_file('security.conf')
+              .with_content(%r{^\s+SecTmpDir /var/lib/mod_security$})
+          }
+        end
       when 'RedHat'
         context 'on RedHat based systems' do
           it {
@@ -42,6 +49,7 @@ describe 'apache::mod::security', type: :class do
               .with_content(%r{^\s+SecAuditLogType Serial$})
               .with_content(%r{^\s+SecDebugLog /var/log/httpd/modsec_debug.log$})
               .with_content(%r{^\s+SecAuditLog /var/log/httpd/modsec_audit.log$})
+              .with_content(%r{^\s+SecTmpDir /var/lib/mod_security$})
           }
           it {
             is_expected.to contain_file('/etc/httpd/modsecurity.d').with(
@@ -151,24 +159,42 @@ describe 'apache::mod::security', type: :class do
               }
             end
 
-            it {
-              is_expected.to contain_file('/etc/httpd/modsecurity.d/security_crs.conf').with_content \
-                %r{^SecAction \\\n\s+\"id:900000,\\\n\s+phase:1,\\\n\s+nolog,\\\n\s+pass,\\\n\s+t:none,\\\n\s+setvar:tx.paranoia_level=1"$}
-              is_expected.to contain_file('/etc/httpd/modsecurity.d/security_crs.conf').with_content \
-                %r{^SecAction \\\n\s+\"id:900001,\\\n\s+phase:1,\\\n\s+nolog,\\\n\s+pass,\\\n\s+t:none,\\\n\s+setvar:tx.executing_paranoia_level=2"$}
-              is_expected.to contain_file('/etc/httpd/modsecurity.d/security_crs.conf').with_content \
-                %r{
-                  ^SecAction\ \\\n
-                  \s+\"id:900700,\\\n
-                  \s+phase:1,\\\n
-                  \s+nolog,\\\n
-                  \s+pass,\\\n
-                  \s+t:none,\\\n
-                  \s+setvar:'tx.dos_burst_time_slice=30',\\\n
-                  \s+setvar:'tx.dos_counter_threshold=120',\\\n
-                  \s+setvar:'tx.dos_block_timeout=300'"$
-              }x
-            }
+            if facts[:os]['release']['major'].to_i < 8 && facts[:os]['family'] == 'RedHat'
+              it {
+                is_expected.to contain_file('/etc/httpd/modsecurity.d/security_crs.conf').with_content \
+                  %r{
+                    ^SecAction\ \\\n
+                    \ \ "id:'900001',\ \\\n
+                    \ \ phase:1,\ \\\n
+                    \ \ t:none,\ \\\n
+                    \ \ setvar:tx.critical_anomaly_score=5,\ \\\n
+                    \ \ setvar:tx.error_anomaly_score=4,\ \\\n
+                    \ \ setvar:tx.warning_anomaly_score=3,\ \\\n
+                    \ \ setvar:tx.notice_anomaly_score=2,\ \\\n
+                    \ \ nolog,\ \\\n
+                    \ \ pass"$
+                }x
+              }
+            else
+              it {
+                is_expected.to contain_file('/etc/httpd/modsecurity.d/security_crs.conf').with_content \
+                  %r{^SecAction \\\n\s+\"id:900000,\\\n\s+phase:1,\\\n\s+nolog,\\\n\s+pass,\\\n\s+t:none,\\\n\s+setvar:tx.paranoia_level=1"$}
+                is_expected.to contain_file('/etc/httpd/modsecurity.d/security_crs.conf').with_content \
+                  %r{^SecAction \\\n\s+\"id:900001,\\\n\s+phase:1,\\\n\s+nolog,\\\n\s+pass,\\\n\s+t:none,\\\n\s+setvar:tx.executing_paranoia_level=2"$}
+                is_expected.to contain_file('/etc/httpd/modsecurity.d/security_crs.conf').with_content \
+                  %r{
+                    ^SecAction\ \\\n
+                    \s+\"id:900700,\\\n
+                    \s+phase:1,\\\n
+                    \s+nolog,\\\n
+                    \s+pass,\\\n
+                    \s+t:none,\\\n
+                    \s+setvar:'tx.dos_burst_time_slice=30',\\\n
+                    \s+setvar:'tx.dos_counter_threshold=120',\\\n
+                    \s+setvar:'tx.dos_block_timeout=300'"$
+                }x
+              }
+            end
           end
 
           describe 'with invalid CRS parameters' do
@@ -211,6 +237,7 @@ describe 'apache::mod::security', type: :class do
               .with_content(%r{^\s+SecAuditLogType Serial$})
               .with_content(%r{^\s+SecDebugLog /var/log/apache2/modsec_debug.log$})
               .with_content(%r{^\s+SecAuditLog /var/log/apache2/modsec_audit.log$})
+              .with_content(%r{^\s+SecTmpDir /var/cache/modsecurity$})
           }
           it {
             is_expected.to contain_file('/etc/modsecurity').with(
