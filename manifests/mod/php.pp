@@ -81,9 +81,9 @@ class apache::mod::php (
   $mod_packages = $apache::mod_packages
   if $package_name {
     $_package_name = $package_name
-  } elsif has_key($mod_packages, $mod) { # 2.6 compatibility hack
+  } elsif $mod in $mod_packages { # 2.6 compatibility hack
     $_package_name = $mod_packages[$mod]
-  } elsif has_key($mod_packages, 'phpXXX') { # 2.6 compatibility hack
+  } elsif 'phpXXX' in $mod_packages { # 2.6 compatibility hack
     $_package_name = regsubst($mod_packages['phpXXX'], 'XXX', $php_version)
   } else {
     $_package_name = undef
@@ -106,6 +106,16 @@ class apache::mod::php (
   }
 
   if $facts['os']['name'] == 'SLES' {
+    # Enable legacy repo to install apache2-mod_php7 package
+    # if SUSE OS major version is >= 15 and minor version is > 3
+    if ($_package_name == 'apache2-mod_php7' and versioncmp($facts['os']['release']['major'], '15') >= 0 and versioncmp($facts['os']['release']['minor'], '3') == 1) {
+      exec { 'enable legacy repos':
+        path    => '/bin:/usr/bin/:/sbin:/usr/sbin',
+        command => 'SUSEConnect --product sle-module-legacy/15.4/x86_64',
+        unless  => 'SUSEConnect --status-text | grep sle-module-legacy/15.4/x86_64',
+      }
+    }
+
     ::apache::mod { $mod:
       package        => $_package_name,
       package_ensure => $package_ensure,
