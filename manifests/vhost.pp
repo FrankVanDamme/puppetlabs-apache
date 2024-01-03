@@ -96,11 +96,6 @@
 #   the `aliases` parameter. As described in the `mod_alias` documentation, add more specific 
 #   `alias`, `aliasmatch`, `scriptalias` or `scriptaliasmatch` parameters before the more 
 #   general ones to avoid shadowing.<BR />
-#   > **Note**: Use the `aliases` parameter instead of the `scriptaliases` parameter because 
-#   you can precisely control the order of various alias directives. Defining `ScriptAliases` 
-#   using the `scriptaliases` parameter means *all* `ScriptAlias` directives will come after 
-#   *all* `Alias` directives, which can lead to `Alias` directives shadowing `ScriptAlias` 
-#   directives. This often causes problems; for example, this could cause problems with Nagios.<BR />
 #   If `apache::mod::passenger` is loaded and `PassengerHighPerformance` is `true`, the `Alias` 
 #   directive might not be able to honor the `PassengerEnabled => off` statement. See 
 #   [this article](http://www.conandalton.net/2010/06/passengerenabled-off-not-working.html) for details.
@@ -813,6 +808,26 @@
 #   to only allow the spawning of application processes with UIDs equal to, or higher than, this 
 #   specified value on LVE-enabled kernels.
 #
+# @param passenger_dump_config_manifest
+#   Sets [PassengerLveMinUid](https://www.phusionpassenger.com/docs/references/config_reference/apache/#passengerlveminuid),
+#   to dump the configuration manifest to a file.
+#
+# @param passenger_admin_panel_url
+#   Sets [PassengerAdminPanelUrl](https://www.phusionpassenger.com/docs/references/config_reference/apache/#passengeradminpanelurl),
+#   to specify the URL of the Passenger admin panel.
+#
+# @param passenger_admin_panel_auth_type
+#   Sets [PassengerAdminPanelAuthType](https://www.phusionpassenger.com/docs/references/config_reference/apache/#passengeradminpanelauthtype),
+#   to specify the authentication type for the Passenger admin panel.
+#
+# @param passenger_admin_panel_username
+#   Sets [PassengerAdminPanelUsername](https://www.phusionpassenger.com/docs/references/config_reference/apache/#passengeradminpanelusername),
+#   to specify the username for the Passenger admin panel.
+#
+# @param passenger_admin_panel_password
+#   Sets [PassengerAdminPanelPassword](https://www.phusionpassenger.com/docs/references/config_reference/apache/#passengeradminpanelpassword),
+#   to specify the password for the Passenger admin panel.
+#
 # @param php_values
 #   Allows per-virtual host setting [`php_value`s](http://php.net/manual/en/configuration.changes.php). 
 #   These flags or values can be overwritten by a user or an application.
@@ -1101,34 +1116,6 @@
 #   Defines a directory of CGI scripts to be aliased to the path '/cgi-bin', such as 
 #   '/usr/scripts'.
 #
-# @param scriptaliases
-#   > **Note**: This parameter is deprecated in favor of the `aliases` parameter.<br />
-#   Passes an array of hashes to the virtual host to create either ScriptAlias or 
-#   ScriptAliasMatch statements per the `mod_alias` documentation.
-#   ``` puppet
-#   scriptaliases => [
-#     {
-#       alias => '/myscript',
-#       path  => '/usr/share/myscript',
-#     },
-#     {
-#       aliasmatch => '^/foo(.*)',
-#       path       => '/usr/share/fooscripts$1',
-#     },
-#     {
-#       aliasmatch => '^/bar/(.*)',
-#       path       => '/usr/share/bar/wrapper.sh/$1',
-#     },
-#     {
-#       alias => '/neatscript',
-#       path  => '/usr/share/neatscript',
-#     },
-#   ]
-#   ```
-#   The ScriptAlias and ScriptAliasMatch directives are created in the order specified. 
-#   As with [Alias and AliasMatch](#aliases) directives, specify more specific aliases 
-#   before more general ones to avoid shadowing.
-#
 # @param serveradmin
 #   Specifies the email address Apache displays when it renders one of its error pages.
 #
@@ -1331,6 +1318,83 @@
 #   Any handlers you do not set in these hashes are considered `undefined` within Puppet and 
 #   are not added to the virtual host, resulting in the module using their default values.
 #
+#   The `directories` param can accepts the different authentication ways, including `gssapi`, `Basic (authz_core)`, 
+#   and others.
+#
+#     * `gssapi` - Specifies mod_auth_gssapi parameters for particular directories in a virtual host directory
+#       TODO: check, if this Documentation is obsolete
+#
+#       ```puppet
+#       apache::vhost { 'sample.example.net':
+#         docroot     => '/path/to/directory',
+#         directories => [
+#           { path   => '/path/to/different/dir',
+#             gssapi => {
+#               acceptor_name            => '{HOSTNAME}',
+#               allowed_mech             => ['krb5', 'iakerb', 'ntlmssp'],
+#               authname                 => 'Kerberos 5',
+#               authtype                 => 'GSSAPI',
+#               basic_auth               => true,
+#               basic_auth_mech          => ['krb5', 'iakerb', 'ntlmssp'],
+#               basic_ticket_timeout     => 300,
+#               connection_bound         => true,
+#               cred_store               => {
+#                 ccache        => ['/path/to/directory'],
+#                 client_keytab => ['/path/to/example.keytab'],
+#                 keytab        => ['/path/to/example.keytab'],
+#               },
+#               deleg_ccache_dir         => '/path/to/directory',
+#               deleg_ccache_env_var     => 'KRB5CCNAME',
+#               deleg_ccache_perms       => {
+#                 mode => '0600',
+#                 uid  => 'example-user',
+#                 gid  => 'example-group',
+#               },
+#               deleg_ccache_unique      => true,
+#               impersonate              => true,
+#               local_name               => true,
+#               name_attributes          => 'json',
+#               negotiate_once           => true,
+#               publish_errors           => true,
+#               publish_mech             => true,
+#               required_name_attributes =>	'auth-indicators=high',
+#               session_key              => 'file:/path/to/example.key',
+#               signal_persistent_auth   => true,
+#               ssl_only                 => true,
+#               use_s4u2_proxy           => true,
+#               use_sessions             => true,
+#             }
+#           },
+#         ],
+#       }
+#       ```
+#
+#     * `Basic` - Specifies mod_authz_core parameters for particular directories in a virtual host directory
+#       ```puppet
+#       apache::vhost { 'sample.example.net':
+#         docroot     => '/path/to/directory',
+#         directories => [
+#           {
+#             path        => '/path/to/different/dir',
+#             auth_type => 'Basic',
+#             authz_core  => {
+#               require_all => {
+#                 'require_any' => {
+#                   'require' => ['user superadmin'],
+#                   'require_all' => {
+#                     'require' => ['group admins', 'ldap-group "cn=Administrators,o=Airius"'],
+#                   },
+#                 },
+#                 'require_none' => {
+#                   'require' => ['group temps', 'ldap-group "cn=Temporary Employees,o=Airius"']
+#                 }
+#               }
+#             }
+#           },
+#         ],
+#       }
+#       ```
+#
 # @param custom_fragment
 #   Pass a string of custom configuration directives to be placed at the end of the directory 
 #   configuration.
@@ -1406,56 +1470,6 @@
 #     directories => [
 #       { path  => '/path/to/different/dir',
 #         additional_includes => ['/custom/path/includes', '/custom/path/another_includes',],
-#       },
-#     ],
-#   }
-#   ```
-#
-# TODO: check, if this Documentation is obsolete
-# lint:ignore:parameter_documentation
-# @param gssapi
-# lint:endignore
-#   Specfies mod_auth_gssapi parameters for particular directories in a virtual host directory
-#   ```puppet
-#   apache::vhost { 'sample.example.net':
-#     docroot     => '/path/to/directory',
-#     directories => [
-#       { path   => '/path/to/different/dir',
-#         gssapi => {
-#           acceptor_name            => '{HOSTNAME}',
-#           allowed_mech             => ['krb5', 'iakerb', 'ntlmssp'],
-#           authname                 => 'Kerberos 5',
-#           authtype                 => 'GSSAPI',
-#           basic_auth               => true,
-#           basic_auth_mech          => ['krb5', 'iakerb', 'ntlmssp'],
-#           basic_ticket_timeout     => 300,
-#           connection_bound         => true,
-#           cred_store               => {
-#             ccache        => ['/path/to/directory'],
-#             client_keytab => ['/path/to/example.keytab'],
-#             keytab        => ['/path/to/example.keytab'],
-#           },
-#           deleg_ccache_dir         => '/path/to/directory',
-#           deleg_ccache_env_var     => 'KRB5CCNAME',
-#           deleg_ccache_perms       => {
-#             mode => '0600',
-#             uid  => 'example-user',
-#             gid  => 'example-group',
-#           },
-#           deleg_ccache_unique      => true,
-#           impersonate              => true,
-#           local_name               => true,
-#           name_attributes          => 'json',
-#           negotiate_once           => true,
-#           publish_errors           => true,
-#           publish_mech             => true,
-#           required_name_attributes =>	'auth-indicators=high',
-#           session_key              => 'file:/path/to/example.key',
-#           signal_persistent_auth   => true,
-#           ssl_only                 => true,
-#           use_s4u2_proxy           => true,
-#           use_sessions             => true,
-#         }
 #       },
 #     ],
 #   }
@@ -1790,7 +1804,6 @@ define apache::vhost (
   Variant[Array[Hash], String] $error_documents                                       = [],
   Optional[Variant[Stdlib::Absolutepath, Enum['disabled']]] $fallbackresource         = undef,
   Optional[String] $scriptalias                                                       = undef,
-  Array[Hash] $scriptaliases                                                          = [],
   Optional[Integer] $limitreqfieldsize                                                = undef,
   Optional[Integer] $limitreqfields                                                   = undef,
   Optional[Integer] $limitreqline                                                     = undef,
@@ -1909,6 +1922,11 @@ define apache::vhost (
   Optional[String] $passenger_app_log_file                                            = undef,
   Optional[Boolean] $passenger_debugger                                               = undef,
   Optional[Integer] $passenger_lve_min_uid                                            = undef,
+  Optional[String] $passenger_admin_panel_url                                         = undef,
+  Optional[Enum['basic']] $passenger_admin_panel_auth_type                            = undef,
+  Optional[String] $passenger_admin_panel_username                                    = undef,
+  Optional[String] $passenger_admin_panel_password                                    = undef,
+  Optional[String] $passenger_dump_config_manifest                                    = undef,
   Optional[String] $add_default_charset                                               = undef,
   Boolean $modsec_disable_vhost                                                       = false,
   Optional[Variant[Hash, Array]] $modsec_disable_ids                                  = undef,
@@ -2372,11 +2390,10 @@ define apache::vhost (
     }
   }
 
-  # Template uses no variables
   concat::fragment { "${name}-serversignature":
     target  => "${priority_real}${filename}.conf",
     order   => 90,
-    content => template('apache/vhost/_serversignature.erb'),
+    content => "  ServerSignature Off\n",
   }
 
   # Template uses:
@@ -2534,9 +2551,8 @@ define apache::vhost (
   }
 
   # Template uses:
-  # - $scriptaliases
   # - $scriptalias
-  if ($scriptalias or !empty($scriptaliases)) and $ensure == 'present' {
+  if $scriptalias and $ensure == 'present' {
     include apache::mod::alias
 
     concat::fragment { "${name}-scriptalias":
@@ -2789,7 +2805,8 @@ define apache::vhost (
   # - $passenger_max_requests
   # - $passenger_max_request_time
   # - $passenger_memory_limit
-  if ($passenger_enabled != undef or $passenger_start_timeout != undef or $passenger_ruby != undef or $passenger_python != undef or $passenger_nodejs != undef or $passenger_meteor_app_settings != undef or $passenger_app_env != undef or $passenger_app_root != undef or $passenger_app_group_name != undef or $passenger_app_start_command != undef or $passenger_app_type != undef or $passenger_startup_file != undef or $passenger_restart_dir != undef or $passenger_spawn_method != undef or $passenger_load_shell_envvars != undef or $passenger_preload_bundler != undef or $passenger_rolling_restarts != undef or $passenger_resist_deployment_errors != undef or $passenger_min_instances != undef or $passenger_max_instances != undef or $passenger_max_preloader_idle_time != undef or $passenger_force_max_concurrent_requests_per_process != undef or $passenger_concurrency_model != undef or $passenger_thread_count != undef or $passenger_high_performance != undef or $passenger_max_request_queue_size != undef or $passenger_max_request_queue_time != undef or $passenger_user != undef or $passenger_group != undef or $passenger_friendly_error_pages != undef or $passenger_buffer_upload != undef or $passenger_buffer_response != undef or $passenger_allow_encoded_slashes != undef or $passenger_lve_min_uid != undef or $passenger_base_uri != undef or $passenger_error_override != undef or $passenger_sticky_sessions != undef or $passenger_sticky_sessions_cookie_name != undef or $passenger_sticky_sessions_cookie_attributes != undef or $passenger_app_log_file != undef or $passenger_debugger != undef or $passenger_max_requests != undef or $passenger_max_request_time != undef or $passenger_memory_limit != undef) and $ensure == 'present' {
+  # - $passenger_dump_config_manifest
+  if ($passenger_enabled != undef or $passenger_start_timeout != undef or $passenger_ruby != undef or $passenger_python != undef or $passenger_nodejs != undef or $passenger_meteor_app_settings != undef or $passenger_app_env != undef or $passenger_app_root != undef or $passenger_app_group_name != undef or $passenger_app_start_command != undef or $passenger_app_type != undef or $passenger_startup_file != undef or $passenger_restart_dir != undef or $passenger_spawn_method != undef or $passenger_load_shell_envvars != undef or $passenger_preload_bundler != undef or $passenger_rolling_restarts != undef or $passenger_resist_deployment_errors != undef or $passenger_min_instances != undef or $passenger_max_instances != undef or $passenger_max_preloader_idle_time != undef or $passenger_force_max_concurrent_requests_per_process != undef or $passenger_concurrency_model != undef or $passenger_thread_count != undef or $passenger_high_performance != undef or $passenger_max_request_queue_size != undef or $passenger_max_request_queue_time != undef or $passenger_user != undef or $passenger_group != undef or $passenger_friendly_error_pages != undef or $passenger_buffer_upload != undef or $passenger_buffer_response != undef or $passenger_allow_encoded_slashes != undef or $passenger_lve_min_uid != undef or $passenger_base_uri != undef or $passenger_error_override != undef or $passenger_sticky_sessions != undef or $passenger_sticky_sessions_cookie_name != undef or $passenger_sticky_sessions_cookie_attributes != undef or $passenger_app_log_file != undef or $passenger_debugger != undef or $passenger_max_requests != undef or $passenger_max_request_time != undef or $passenger_memory_limit != undef or $passenger_dump_config_manifest != undef) and $ensure == 'present' {
     include apache::mod::passenger
 
     concat::fragment { "${name}-passenger":
@@ -2931,8 +2948,9 @@ define apache::vhost (
     }
   }
 
-
-  # Template uses no variables
+  # Template uses:
+  # - $define
+  # - $passenger_pre_start
   concat::fragment { "${name}-file_footer":
     target  => "${priority_real}${filename}.conf",
     order   => 999,

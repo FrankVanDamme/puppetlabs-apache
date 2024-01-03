@@ -3,9 +3,9 @@
 #
 # @api private
 class apache::default_mods (
-  Boolean $all                                   = true,
-  Optional[Variant[Array[String], String]] $mods = undef,
-  Boolean $use_systemd                           = $apache::use_systemd,
+  Boolean $all                                         = true,
+  Optional[Variant[Array[String[1]], String[1]]] $mods = undef,
+  Boolean $use_systemd                                 = $apache::use_systemd,
 ) {
   # These are modules required to run the default configuration.
   # They are not configurable at this time, so we just include
@@ -131,9 +131,7 @@ class apache::default_mods (
     include apache::mod::filter
 
     # authz_core is needed for 'Require' directive
-    ::apache::mod { 'authz_core':
-      id => 'authz_core_module',
-    }
+    include apache::mod::authz_core
 
     # lots of stuff seems to break without access_compat
     ::apache::mod { 'access_compat': }
@@ -145,17 +143,13 @@ class apache::default_mods (
     ::apache::default_mods::load { $mods: }
 
     # authz_core is needed for 'Require' directive
-    ::apache::mod { 'authz_core':
-      id => 'authz_core_module',
-    }
+    include apache::mod::authz_core
 
     # filter is needed by mod_deflate
     include apache::mod::filter
   } else {
     # authz_core is needed for 'Require' directive
-    ::apache::mod { 'authz_core':
-      id => 'authz_core_module',
-    }
+    include apache::mod::authz_core
 
     # filter is needed by mod_deflate
     include apache::mod::filter

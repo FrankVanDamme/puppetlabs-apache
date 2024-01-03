@@ -1,12 +1,12 @@
 {
   "name": "puppetlabs-apache",
-  "version": "10.1.1",
+  "version": "11.1.0",
   "author": "puppetlabs",
   "summary": "Installs, configures, and manages Apache virtual hosts, web services, and modules.",
   "license": "Apache-2.0",
   "source": "https://github.com/puppetlabs/puppetlabs-apache",
   "project_page": "https://github.com/puppetlabs/puppetlabs-apache",
-  "issues_url": "https://tickets.puppetlabs.com/browse/MODULES",
+  "issues_url": "https://github.com/puppetlabs/puppetlabs-apache/issues",
   "dependencies": [
     {
       "name": "puppetlabs/stdlib",
@@ -84,7 +84,7 @@
   "requirements": [
     {
       "name": "puppet",
-      "version_requirement": ">= 7.0.0 < 9.0.0"
+      "version_requirement": ">= 7.9.0 < 9.0.0"
     }
   ],
   "description": "Module for Apache configuration",
