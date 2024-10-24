@@ -1,5 +1,5 @@
 class apache::mod::log_config {
-    if ( $::osfamily != "Debian" ){
+    if ( $facts[os][family] != "Debian" ){
         notify { "engage log config mod!!": }
         apache::mod { 'log_config': }
     }

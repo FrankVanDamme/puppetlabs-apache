@@ -1,6 +1,5 @@
 class apache::mod::logio {
-    if ( $::osfamily != "Debian" ){
+    if ( $facts[os][family] != "Debian" ){
         apache::mod { 'logio': }
     }
 }
-
