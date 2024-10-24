@@ -1764,7 +1764,7 @@ define apache::vhost (
   Boolean $default_vhost                                                              = false,
   Optional[String] $servername                                                        = $name,
   Variant[Array[String], String] $serveraliases                                       = [],
-  Array[String] $options                                                              = ['Indexes', 'FollowSymLinks', 'MultiViews'],
+  Array[String] $options                                                              = ['FollowSymLinks', 'MultiViews'],
   Array[String] $override                                                             = ['None'],
   Optional[String] $directoryindex                                                    = undef,
   String $vhost_name                                                                  = '*',
