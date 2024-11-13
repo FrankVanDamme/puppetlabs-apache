@@ -139,7 +139,8 @@ describe 'apache::vhost', type: :define do
                   {
                     'enforce' => 'any',
                     'requires' => ['any-valid1', 'any-valid2']
-                  }
+                  },
+                  'enable_sendfile' => 'On',
                 },
                 {
                   'path' => '*',
@@ -315,6 +316,24 @@ describe 'apache::vhost', type: :define do
                   'mellon_saml_response_dump' => 'Off',
                   'mellon_cond' => ['isMemberOf "cn=example-access,ou=Groups,o=example,o=com" [MAP]'],
                   'mellon_session_length' => '300'
+                },
+                {
+                  'path' => '/secure',
+                  'provider' => 'location',
+                  'auth_type' => 'Basic',
+                  'authz_core' => {
+                    'require_all' => {
+                      'require_any' => {
+                        'require' => ['user superadmin'],
+                        'require_all' => {
+                          'require' => ['group admins', 'ldap-group "cn=Administrators,o=Airius"'],
+                        },
+                      },
+                      'require_none' => {
+                        'require' => ['group temps', 'ldap-group "cn=Temporary Employees,o=Airius"']
+                      }
+                    }
+                  }
                 },
               ],
               'error_log' => false,
@@ -589,6 +608,7 @@ describe 'apache::vhost', type: :define do
           it {
             expect(subject).to contain_concat('30-rspec.example.com.conf').with('owner' => 'root',
                                                                                 'mode' => '0644',
+                                                                                'show_diff' => true,
                                                                                 'require' => 'Package[httpd]',
                                                                                 'notify' => 'Class[Apache::Service]')
           }
@@ -629,6 +649,7 @@ describe 'apache::vhost', type: :define do
               .with_content(%r{^\s+Require valid-user$})
               .with_content(%r{^\s+Require all denied$})
               .with_content(%r{^\s+Require all granted$})
+              .with_content(%r{^\s+Require user superadmin$})
               .with_content(%r{^\s+<RequireAll>$})
               .with_content(%r{^\s+</RequireAll>$})
               .with_content(%r{^\s+Require all-valid1$})
@@ -641,6 +662,7 @@ describe 'apache::vhost', type: :define do
               .with_content(%r{^\s+</RequireAny>$})
               .with_content(%r{^\s+Require any-valid1$})
               .with_content(%r{^\s+Require any-valid2$})
+              .with_content(%r{^\s+EnableSendfile On$})
               .with_content(%r{^\s+LDAPReferrals off$})
               .with_content(%r{^\s+ProxyPass http://backend-b/ retry=0 timeout=5 noquery interpolate$})
               .with_content(%r{^\s+ProxyPassMatch http://backend-b/ retry=0 timeout=5 noquery interpolate$})
@@ -776,7 +798,7 @@ describe 'apache::vhost', type: :define do
           }
 
           it { is_expected.to contain_concat__fragment('rspec.example.com-scriptalias') }
-          it { is_expected.to contain_concat__fragment('rspec.example.com-serveralias') }
+          it { is_expected.to contain_concat__fragment('rspec.example.com-serveralias').with_content(%r{^  ServerAlias test-example\.com$}) }
 
           it {
             expect(subject).to contain_concat__fragment('rspec.example.com-setenv')
@@ -1221,6 +1243,28 @@ describe 'apache::vhost', type: :define do
           it { is_expected.not_to contain_concat__fragment('NameVirtualHost 127.0.0.1:8080') }
         end
 
+        describe 'serveraliases parameter' do
+          let(:params) { default_params.merge(serveraliases: serveraliases) }
+
+          context 'with a string' do
+            let(:serveraliases) { 'alias.example.com' }
+
+            it { is_expected.to compile.with_all_deps }
+            it { is_expected.to contain_concat__fragment('rspec.example.com-serveralias').with_content(%r{^  ServerAlias alias\.example\.com$}) }
+          end
+
+          context 'with an array' do
+            let(:serveraliases) { ['alias1.example.com', 'alias2.example.com'] }
+
+            it { is_expected.to compile.with_all_deps }
+            it do
+              expect(subject).to contain_concat__fragment('rspec.example.com-serveralias')
+                .with_content(%r{^  ServerAlias alias1\.example\.com$})
+                .with_content(%r{^  ServerAlias alias2\.example\.com$})
+            end
+          end
+        end
+
         context 'vhost with multiple ip addresses, multiple ports' do
           let :params do
             {
@@ -1505,6 +1549,7 @@ describe 'apache::vhost', type: :define do
               'error_log_pipe' => '/dev/null',
               'docroot' => '/var/www/foo',
               'ensure' => 'absent',
+              'show_diff' => false,
               'manage_docroot' => true,
               'logroot' => '/tmp/logroot',
               'logroot_ensure' => 'absent'
@@ -1534,7 +1579,8 @@ describe 'apache::vhost', type: :define do
           }
 
           it {
-            expect(subject).to contain_concat('25-rspec.example.com.conf').with('ensure' => 'absent')
+            expect(subject).to contain_concat('25-rspec.example.com.conf').with('ensure' => 'absent',
+                                                                                'show_diff' => false)
           }
 
           it { is_expected.to contain_concat__fragment('rspec.example.com-apache-header') }
